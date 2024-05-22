@@ -33,11 +33,12 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
 public class text_editor extends AppCompatActivity {
-    Button addImgButton,addAudioButton,addTextButton;
+    Button addImgButton,addAudioButton,addTextButton,returnButton;
     LinearLayout linearLayout;
     public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,REQUEST_CODE_PERMISSION=4;
     private MediaPlayer mediaPlayer=null;
@@ -82,6 +83,7 @@ public class text_editor extends AppCompatActivity {
         addImgButton = findViewById(R.id.but_add_img);
         addAudioButton = findViewById(R.id.but_add_audio);
         addTextButton = findViewById(R.id.but_add_text);
+        returnButton = findViewById(R.id.but_back);
         requestRecordPermissions();
         addImgButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -183,7 +185,23 @@ public class text_editor extends AppCompatActivity {
                 linearLayout.addView(textBlock);
             }
         });
+        returnButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TextView title = findViewById(R.id.text_title);
+                TextView time = findViewById(R.id.create_time);
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra("title",title.getText().toString());
+                returnIntent.putExtra("time",time.getText().toString());
+                setResult(RESULT_OK, returnIntent);
+                finish();
+            }
+        });
         linearLayout = findViewById(R.id.linear_layout);
+        TextView createTime = findViewById(R.id.create_time);
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        createTime.setText(dateFormat.format(calendar.getTime()));
         //ActivityCompat.requestPermissions(text_editor.this,new String[]{Manifest.permission.CAMERA} );
     }
     @Override
