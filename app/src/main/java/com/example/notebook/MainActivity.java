@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 if (databaseHelper.checkUser(username, password)) {
                     Toast.makeText(MainActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
-                    // 登录成功后的逻辑
+                    // 登录成功后跳转到主页
                 } else {
                     Toast.makeText(MainActivity.this, "Invalid username or password", Toast.LENGTH_SHORT).show();
                 }
