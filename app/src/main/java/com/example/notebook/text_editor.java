@@ -6,6 +6,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
@@ -16,8 +17,12 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -43,6 +48,7 @@ public class text_editor extends AppCompatActivity {
     public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,REQUEST_CODE_PERMISSION=4;
     private MediaPlayer mediaPlayer=null;
     private View playingAudioBlock = null;
+    private View recodingBlock = null;
     private MediaRecorder mediaRecorder = null;
     private Handler handler = new Handler();
     private long startTime = 0;
@@ -158,6 +164,7 @@ public class text_editor extends AppCompatActivity {
                             Log.d("AudioURI", "Audio URI: " + audioUri.toString());
                             setupRecordBlock(recordBlock);
                             linearLayout.addView(recordBlock);
+                            setDrag(recordBlock);
                             startTime = System.currentTimeMillis();
                             audioDuration = recordBlock.findViewById(R.id.audioDuration);
                             handler.post(updateDurationRunnable);// 更新时长
@@ -183,6 +190,8 @@ public class text_editor extends AppCompatActivity {
             public void onClick(View v) {
                 View textBlock = getLayoutInflater().inflate(R.layout.text_layout, linearLayout, false);
                 linearLayout.addView(textBlock);
+                setDrag(textBlock);
+
             }
         });
         returnButton.setOnClickListener(new View.OnClickListener() {
@@ -202,6 +211,9 @@ public class text_editor extends AppCompatActivity {
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         createTime.setText(dateFormat.format(calendar.getTime()));
+        View textBlock = getLayoutInflater().inflate(R.layout.text_layout, linearLayout, false);
+        linearLayout.addView(textBlock);
+        setDrag(textBlock);
         //ActivityCompat.requestPermissions(text_editor.this,new String[]{Manifest.permission.CAMERA} );
     }
     @Override
@@ -214,6 +226,7 @@ public class text_editor extends AppCompatActivity {
             if(imageUri!=null)
             {
                 ImageView imageView = new ImageView(this);
+                setDrag(imageView);
                 // 设置 ImageView 的属性，比如宽度、高度、图片资源等
                 linearLayout.addView(imageView);
                 Glide.with(this).load(imageUri).into(imageView);
@@ -224,6 +237,7 @@ public class text_editor extends AppCompatActivity {
             if(photoUri!=null)
             {
                 ImageView imageView = new ImageView(this);
+                setDrag(imageView);
                 linearLayout.addView(imageView);
                 Glide.with(this).load(photoUri).into(imageView);
             }
@@ -233,6 +247,7 @@ public class text_editor extends AppCompatActivity {
             audioBlock.setTag(audioUri);
             setupAudioBlock(audioBlock);
             linearLayout.addView(audioBlock);
+            setDrag(audioBlock);
         }
     }
 
@@ -294,22 +309,20 @@ public class text_editor extends AppCompatActivity {
     }
     private void setupRecordBlock(View recordBlock){
         ImageButton stopButton = recordBlock.findViewById(R.id.stopButton);
-        TextView duration = recordBlock.findViewById(R.id.audioDuration);
+        recodingBlock = recordBlock;
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mediaRecorder.stop();
-                mediaRecorder.release();
-                mediaRecorder = null;
+                releaseMediaRecorder();
                 // 把录音块换成音频文件块
                 View audioBlock = getLayoutInflater().inflate(R.layout.audio_player_layout, linearLayout, false);
                 audioBlock.setTag(recordBlock.getTag());
                 Log.d("AudioURI", "Audio URI: " + recordBlock.getTag().toString());
                 setupAudioBlock(audioBlock);
-                handler.removeCallbacks(updateDurationRunnable);// 停止更新时长
                 int index = linearLayout.indexOfChild(recordBlock);
                 linearLayout.removeView(recordBlock);
                 linearLayout.addView(audioBlock, index);
+                setDrag(audioBlock);
 
             }
         });
@@ -371,6 +384,16 @@ public class text_editor extends AppCompatActivity {
             mediaPlayer = null;
         }
     }
+    private void releaseMediaRecorder(){
+        if(mediaRecorder != null){
+            // 停止录音
+            mediaRecorder.stop();
+            mediaRecorder.release();
+            mediaRecorder = null;
+            recodingBlock = null;
+            handler.removeCallbacks(updateDurationRunnable);// 停止更新时长
+        }
+    }
     private void playAudio(Uri audioUri,ImageButton playButton){
         releaseMediaPlayer();
         mediaPlayer = new MediaPlayer();
@@ -396,6 +419,86 @@ public class text_editor extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    private void setDrag(View view){
+        // 长按弹出菜单
+        final PopupMenu[] popup = new PopupMenu[1];
+        view.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                popup[0] = new PopupMenu(text_editor.this, v);
+                // Inflate the menu from xml
+                popup[0].getMenuInflater().inflate(R.menu.edit_view_menu, popup[0].getMenu());
+                popup[0].setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    public boolean onMenuItemClick(MenuItem item) {
+                        if(item.getItemId() == R.id.delete){
+                            if(recodingBlock == v){
+                                // 停止录音
+                                releaseMediaRecorder();
+                            } else if (playingAudioBlock == v) {
+                                // 停止播放
+                                releaseMediaPlayer();
+                            }
+                            // 删除view
+                            linearLayout.removeView(v);
+                        }
+                        return true;
+                    }
+                });
+                // Show the popup menu
+                popup[0].show();
+                return true;
+            }
+        });
+        // 长按拖拽
+        view.setOnTouchListener(new View.OnTouchListener(){
+
+            private long touchstart;
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        touchstart = System.currentTimeMillis();
+                        return false;  // 返回 false 让长按事件可以被触发
+                    case MotionEvent.ACTION_MOVE:
+                        if (System.currentTimeMillis() - touchstart > ViewConfiguration.getLongPressTimeout()) {
+                            ClipData clipData = ClipData.newPlainText("", "");
+                            View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(v);
+                            v.startDragAndDrop(clipData, shadowBuilder, v, 0);
+                            popup[0].dismiss();
+                            return true;
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        touchstart = 0;
+                        break;
+                }
+                return false;
+            }
+        });
+        view.setOnDragListener(new View.OnDragListener() {
+            @Override
+            public boolean onDrag(View v, DragEvent event) {
+                switch (event.getAction()) {
+                    case DragEvent.ACTION_DROP:
+                        View draggedView = (View) event.getLocalState();
+                        ViewGroup owner = (ViewGroup) draggedView.getParent();
+                        owner.removeView(draggedView);
+                        int dropPosition = linearLayout.indexOfChild(view);
+                        linearLayout.addView(draggedView, dropPosition);
+                        draggedView.setVisibility(View.VISIBLE);
+                        break;
+                    case DragEvent.ACTION_DRAG_ENDED:
+                        View view = (View) event.getLocalState();
+                        view.setVisibility(View.VISIBLE);
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
     }
     @Override
     protected void onDestroy() {
