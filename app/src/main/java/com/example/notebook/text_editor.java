@@ -47,7 +47,7 @@ import java.util.Locale;
 public class text_editor extends AppCompatActivity {
     Button addImgButton,addAudioButton,addTextButton,returnButton;
     LinearLayout linearLayout;
-    public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,REQUEST_CODE_PERMISSION=4;
+    public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION;
     private MediaPlayer mediaPlayer=null;
     private View playingAudioBlock = null;
     private View recodingBlock = null;
@@ -102,19 +102,19 @@ public class text_editor extends AppCompatActivity {
                     public boolean onMenuItemClick(MenuItem item) {
                         // 拍摄照片
                         if(item.getItemId() == R.id.take_photo){
-                            Intent take_picture_intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                            File photoFile = null;
-                            try {
-                                photoFile = createImageFile();
-                            } catch (IOException ex) {
-                                // TODO
+                            if (ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+                                    ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                                    ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                                ActivityCompat.requestPermissions(text_editor.this, new String[]{
+                                        Manifest.permission.CAMERA,
+                                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                        Manifest.permission.READ_EXTERNAL_STORAGE
+                                }, CAMERA_PERMISSION);
                             }
-                            if (photoFile != null) {
-                                String authority = getApplicationContext().getPackageName() + ".fileProvider";
-                                Uri photoUri = FileProvider.getUriForFile(text_editor.this, authority, photoFile);
-                                take_picture_intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-                                startActivityForResult(take_picture_intent, TAKE_PICTURE_REQUEST);
+                            else {
+                                startCamera();
                             }
+
                             return true;
                         }
                         // 从相册选择照片
@@ -150,7 +150,7 @@ public class text_editor extends AppCompatActivity {
                                         Manifest.permission.RECORD_AUDIO,
                                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                         Manifest.permission.READ_EXTERNAL_STORAGE
-                                }, REQUEST_CODE_PERMISSION);
+                                }, RECORD_PERMISSION);
 
                             }
                             else{
@@ -207,9 +207,9 @@ public class text_editor extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode,resultCode,data);
-        if(data == null)
-            return;
         if(requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK){
+            if(data == null)
+                return;
             Uri imageUri = data.getData();
             if(imageUri!=null)
             {
@@ -230,6 +230,8 @@ public class text_editor extends AppCompatActivity {
                 Glide.with(this).load(photoUri).into(imageView);
             }
         } else if (requestCode == PICK_AUDIO_REQUEST) {
+            if(data == null)
+                return;
             Uri audioUri = data.getData();
             View audioBlock = getLayoutInflater().inflate(R.layout.audio_player_layout, linearLayout, false);
             audioBlock.setTag(audioUri);
@@ -343,15 +345,36 @@ public class text_editor extends AppCompatActivity {
         audioDuration = recordBlock.findViewById(R.id.audioDuration);
         handler.post(updateDurationRunnable);// 更新时长
     }
+    private void startCamera(){
+        Intent take_picture_intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File photoFile = null;
+        try {
+            photoFile = createImageFile();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return;
+        }
+        if (photoFile != null) {
+            String authority = getApplicationContext().getPackageName() + ".fileProvider";
+            Uri photoUri = FileProvider.getUriForFile(text_editor.this, authority, photoFile);
+            take_picture_intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+            startActivityForResult(take_picture_intent, TAKE_PICTURE_REQUEST);
+        }
+    }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_PERMISSION) {
+        if (requestCode == RECORD_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startRecord();
             } else {
                 // 权限被用户拒绝，你可以在这里处理权限被拒绝的情况
                 return;
+            }
+        }
+        if(requestCode == CAMERA_PERMISSION){
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startCamera();
             }
         }
     }
