@@ -1,6 +1,8 @@
 package com.example.notebook;
 
 import android.Manifest;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -90,7 +92,6 @@ public class text_editor extends AppCompatActivity {
         addAudioButton = findViewById(R.id.but_add_audio);
         addTextButton = findViewById(R.id.but_add_text);
         returnButton = findViewById(R.id.but_back);
-        requestRecordPermissions();
         addImgButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -142,32 +143,19 @@ public class text_editor extends AppCompatActivity {
                         if(item.getItemId() == R.id.record){
                             if(mediaRecorder != null)
                                 return false;// todo:能不能把菜单设成无效的
-                            Uri audioUri;
-                            try {
-                                mediaRecorder = new MediaRecorder();
-                                mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-                                mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-                                File audioFile = createAudioFile();
-                                String authority = getApplicationContext().getPackageName() + ".fileProvider";
-                                audioUri = FileProvider.getUriForFile(text_editor.this, authority, audioFile);
-                                mediaRecorder.setOutputFile(currentAudioPath);
-                                mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-                                mediaRecorder.prepare();
-                                mediaRecorder.start();// 开始录音
+                            if (ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+                                    ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                                    ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                                ActivityCompat.requestPermissions(text_editor.this, new String[]{
+                                        Manifest.permission.RECORD_AUDIO,
+                                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                        Manifest.permission.READ_EXTERNAL_STORAGE
+                                }, REQUEST_CODE_PERMISSION);
 
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                return false;
                             }
-                            View recordBlock = getLayoutInflater().inflate(R.layout.record_layout, linearLayout, false);
-                            recordBlock.setTag(audioUri);
-                            Log.d("AudioURI", "Audio URI: " + audioUri.toString());
-                            setupRecordBlock(recordBlock);
-                            linearLayout.addView(recordBlock);
-                            setDrag(recordBlock);
-                            startTime = System.currentTimeMillis();
-                            audioDuration = recordBlock.findViewById(R.id.audioDuration);
-                            handler.post(updateDurationRunnable);// 更新时长
+                            else{
+                                startRecord();
+                            }
                             return true;
                         }
                         // 选择音频文件
@@ -327,15 +315,44 @@ public class text_editor extends AppCompatActivity {
             }
         });
     }
-    private void requestRecordPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{
-                    Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-            }, REQUEST_CODE_PERMISSION);
+    private void startRecord(){
+        Uri audioUri;
+        try {
+            mediaRecorder = new MediaRecorder();
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            File audioFile = createAudioFile();
+            String authority = getApplicationContext().getPackageName() + ".fileProvider";
+            audioUri = FileProvider.getUriForFile(text_editor.this, authority, audioFile);
+            mediaRecorder.setOutputFile(currentAudioPath);
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            mediaRecorder.prepare();
+            mediaRecorder.start();// 开始录音
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        View recordBlock = getLayoutInflater().inflate(R.layout.record_layout, linearLayout, false);
+        recordBlock.setTag(audioUri);
+        Log.d("AudioURI", "Audio URI: " + audioUri.toString());
+        setupRecordBlock(recordBlock);
+        linearLayout.addView(recordBlock);
+        setDrag(recordBlock);
+        startTime = System.currentTimeMillis();
+        audioDuration = recordBlock.findViewById(R.id.audioDuration);
+        handler.post(updateDurationRunnable);// 更新时长
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startRecord();
+            } else {
+                // 权限被用户拒绝，你可以在这里处理权限被拒绝的情况
+                return;
+            }
         }
     }
     private String formatDuration(long duration) {
