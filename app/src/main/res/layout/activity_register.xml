@@ -4,55 +4,46 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".RegisterActivity">
 
     <EditText
-        android:id="@+id/username"
+        android:id="@+id/registerUsername"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="账号名"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         android:layout_marginTop="200dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"/>
 
     <EditText
-        android:id="@+id/password"
+        android:id="@+id/registerPassword"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="密码"
         android:inputType="textPassword"
-        app:layout_constraintTop_toBottomOf="@+id/username"
+        app:layout_constraintTop_toBottomOf="@+id/registerUsername"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         android:layout_marginTop="30dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"/>
 
     <Button
-        android:id="@+id/loginButton"
+        android:id="@+id/registerConfirmButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="登录"
-        app:layout_constraintTop_toBottomOf="@+id/password"
+        android:text="确认创建新用户"
+        app:layout_constraintTop_toBottomOf="@+id/registerPassword"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/registerButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         android:layout_marginTop="32dp"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="8dp"/>
-
-    <Button
-        android:id="@+id/registerButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="创建新用户"
-        app:layout_constraintTop_toBottomOf="@+id/password"
-        app:layout_constraintStart_toEndOf="@+id/loginButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="32dp"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="16dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
