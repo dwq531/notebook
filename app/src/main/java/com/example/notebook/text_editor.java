@@ -18,6 +18,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.MenuItem;
@@ -26,6 +28,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -42,12 +45,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class text_editor extends AppCompatActivity {
     Button addImgButton,addAudioButton,addTextButton,returnButton;
     LinearLayout linearLayout;
-    public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION;
+    public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION=5;
+    private static int TEXT=0,IMAGE=1,AUDIO=2;
     private MediaPlayer mediaPlayer=null;
     private View playingAudioBlock = null;
     private View recodingBlock = null;
@@ -55,6 +60,8 @@ public class text_editor extends AppCompatActivity {
     private Handler handler = new Handler();
     private long startTime = 0;
     private TextView audioDuration;
+    private DatabaseHelper databaseHelper;
+    private long note_id,user_id;
 
 
     String currentPhotoPath,currentAudioPath;
@@ -88,10 +95,13 @@ public class text_editor extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_text_editor);
+        databaseHelper = new DatabaseHelper(this);
         addImgButton = findViewById(R.id.but_add_img);
         addAudioButton = findViewById(R.id.but_add_audio);
         addTextButton = findViewById(R.id.but_add_text);
         returnButton = findViewById(R.id.but_back);
+        linearLayout = findViewById(R.id.linear_layout);
+        // 绑定按钮点击事件
         addImgButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -179,7 +189,19 @@ public class text_editor extends AppCompatActivity {
                 View textBlock = getLayoutInflater().inflate(R.layout.text_layout, linearLayout, false);
                 linearLayout.addView(textBlock);
                 setDrag(textBlock);
-
+                long content_id = databaseHelper.addContent(note_id,"",TEXT,linearLayout.indexOfChild(textBlock));
+                EditText editText = textBlock.findViewById(R.id.text_content);
+                editText.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                    @Override
+                    public void afterTextChanged(Editable s) {
+                        Log.d("text_editor",s.toString());
+                        databaseHelper.updateContent(content_id, s.toString());
+                    }
+                });
             }
         });
         returnButton.setOnClickListener(new View.OnClickListener() {
@@ -190,19 +212,59 @@ public class text_editor extends AppCompatActivity {
                 Intent returnIntent = new Intent();
                 returnIntent.putExtra("title",title.getText().toString());
                 returnIntent.putExtra("time",time.getText().toString());
+                returnIntent.putExtra("note_id",note_id);
                 setResult(RESULT_OK, returnIntent);
                 finish();
             }
         });
-        linearLayout = findViewById(R.id.linear_layout);
+
+        // 获取笔记内容
+        Intent intent = getIntent();
+        note_id = intent.getLongExtra("note_id",-1);
+        user_id = intent.getIntExtra("user_id",-1);
+        Log.d("text_editor",String.valueOf(note_id));
+        Note note = databaseHelper.getNote(note_id);
         TextView createTime = findViewById(R.id.create_time);
-        Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        createTime.setText(dateFormat.format(calendar.getTime()));
-        View textBlock = getLayoutInflater().inflate(R.layout.text_layout, linearLayout, false);
-        linearLayout.addView(textBlock);
-        setDrag(textBlock);
-        //ActivityCompat.requestPermissions(text_editor.this,new String[]{Manifest.permission.CAMERA} );
+        createTime.setText(note.create_time);
+        EditText title = findViewById(R.id.text_title);
+        title.setText(note.title);
+        List<Content> contents = databaseHelper.getContentList(note_id);
+        for(Content content:contents){
+            if(content.type == TEXT){
+                View textBlock = getLayoutInflater().inflate(R.layout.text_layout, linearLayout, false);
+                textBlock.setTag(content.content_id);
+                EditText editText = textBlock.findViewById(R.id.text_content);
+                editText.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                    @Override
+                    public void afterTextChanged(Editable s) {
+                        Log.d("text_editor",s.toString());
+                        databaseHelper.updateContent(content.content_id, s.toString());
+                    }
+                });
+                linearLayout.addView(textBlock);
+                editText.setText(content.content);
+                setDrag(textBlock);
+            }
+            else if(content.type == IMAGE){
+                ImageView imageView = new ImageView(this);
+                imageView.setTag(content.content_id);
+                setDrag(imageView);
+                linearLayout.addView(imageView);
+                Glide.with(this).load(content.content).into(imageView);
+            }
+            else if(content.type == AUDIO){
+                View audioBlock = getLayoutInflater().inflate(R.layout.audio_player_layout, linearLayout, false);
+                audioBlock.setTag(content.content_id);
+                setupAudioBlock(audioBlock);
+                linearLayout.addView(audioBlock);
+                setDrag(audioBlock);
+            }
+        }
+
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
@@ -214,10 +276,11 @@ public class text_editor extends AppCompatActivity {
             if(imageUri!=null)
             {
                 ImageView imageView = new ImageView(this);
-                setDrag(imageView);
-                // 设置 ImageView 的属性，比如宽度、高度、图片资源等
                 linearLayout.addView(imageView);
+                long content_id = databaseHelper.addContent(note_id,imageUri.toString(),IMAGE,linearLayout.indexOfChild(imageView));
+                imageView.setTag(content_id);
                 Glide.with(this).load(imageUri).into(imageView);
+                setDrag(imageView);
             }
         }
         else if(requestCode == TAKE_PICTURE_REQUEST && resultCode == RESULT_OK ){
@@ -225,19 +288,23 @@ public class text_editor extends AppCompatActivity {
             if(photoUri!=null)
             {
                 ImageView imageView = new ImageView(this);
-                setDrag(imageView);
                 linearLayout.addView(imageView);
+                long content_id = databaseHelper.addContent(note_id,photoUri.toString(),IMAGE,linearLayout.indexOfChild(imageView));
+                imageView.setTag(content_id);
                 Glide.with(this).load(photoUri).into(imageView);
+                setDrag(imageView);
             }
         } else if (requestCode == PICK_AUDIO_REQUEST) {
             if(data == null)
                 return;
             Uri audioUri = data.getData();
             View audioBlock = getLayoutInflater().inflate(R.layout.audio_player_layout, linearLayout, false);
-            audioBlock.setTag(audioUri);
-            setupAudioBlock(audioBlock);
             linearLayout.addView(audioBlock);
+            long content_id=databaseHelper.addContent(note_id,audioUri.toString(),AUDIO,linearLayout.indexOfChild(audioBlock));
+            audioBlock.setTag(content_id);
+            setupAudioBlock(audioBlock);
             setDrag(audioBlock);
+
         }
     }
 
@@ -245,7 +312,7 @@ public class text_editor extends AppCompatActivity {
         ImageButton playButton = audioBlock.findViewById(R.id.playButton);
         ProgressBar audioProgressBar = audioBlock.findViewById(R.id.audioProgressBar);
         TextView audioDuration = audioBlock.findViewById(R.id.audioDuration);
-        Uri audioUri = (Uri) audioBlock.getTag();
+        Uri audioUri = Uri.parse(databaseHelper.getContent((Long) audioBlock.getTag()).content);
         try{
             // 获取时长
             releaseMediaPlayer();
@@ -264,8 +331,7 @@ public class text_editor extends AppCompatActivity {
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Uri audioUri = (Uri) audioBlock.getTag();
-                Log.d("AudioURI", "Audio URI: " + audioUri.toString());
+                //Uri audioUri = Uri.parse(databaseHelper.getContent((Long) audioBlock.getTag()).content);
                 // 如果正在播放自己
                 if(mediaPlayer!= null && playingAudioBlock == audioBlock) {
                     Log.d("mediaPlayer", "Pause!");
@@ -307,7 +373,6 @@ public class text_editor extends AppCompatActivity {
                 // 把录音块换成音频文件块
                 View audioBlock = getLayoutInflater().inflate(R.layout.audio_player_layout, linearLayout, false);
                 audioBlock.setTag(recordBlock.getTag());
-                Log.d("AudioURI", "Audio URI: " + recordBlock.getTag().toString());
                 setupAudioBlock(audioBlock);
                 int index = linearLayout.indexOfChild(recordBlock);
                 linearLayout.removeView(recordBlock);
@@ -336,10 +401,10 @@ public class text_editor extends AppCompatActivity {
             return;
         }
         View recordBlock = getLayoutInflater().inflate(R.layout.record_layout, linearLayout, false);
-        recordBlock.setTag(audioUri);
-        Log.d("AudioURI", "Audio URI: " + audioUri.toString());
-        setupRecordBlock(recordBlock);
         linearLayout.addView(recordBlock);
+        long content_id = databaseHelper.addContent(note_id,audioUri.toString(),AUDIO,linearLayout.indexOfChild(recordBlock));
+        recordBlock.setTag(content_id);
+        setupRecordBlock(recordBlock);
         setDrag(recordBlock);
         startTime = System.currentTimeMillis();
         audioDuration = recordBlock.findViewById(R.id.audioDuration);
@@ -361,6 +426,7 @@ public class text_editor extends AppCompatActivity {
             startActivityForResult(take_picture_intent, TAKE_PICTURE_REQUEST);
         }
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -481,6 +547,8 @@ public class text_editor extends AppCompatActivity {
                             }
                             // 删除view
                             linearLayout.removeView(v);
+                            long content_id = (long) v.getTag();
+                            databaseHelper.deleteContent(content_id);
                         }
                         return true;
                     }
@@ -505,7 +573,8 @@ public class text_editor extends AppCompatActivity {
                             ClipData clipData = ClipData.newPlainText("", "");
                             View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(v);
                             v.startDragAndDrop(clipData, shadowBuilder, v, 0);
-                            popup[0].dismiss();
+                            if(popup[0]!=null)
+                                popup[0].dismiss();
                             return true;
                         }
                         break;
@@ -524,9 +593,14 @@ public class text_editor extends AppCompatActivity {
                     case DragEvent.ACTION_DROP:
                         View draggedView = (View) event.getLocalState();
                         ViewGroup owner = (ViewGroup) draggedView.getParent();
-                        owner.removeView(draggedView);
+                        int beforePosition = linearLayout.indexOfChild(draggedView);
                         int dropPosition = linearLayout.indexOfChild(view);
+                        owner.removeView(draggedView);
+                        long content_id = (long) draggedView.getTag();
+                        databaseHelper.updateContentPosition(content_id,dropPosition,beforePosition);
                         linearLayout.addView(draggedView, dropPosition);
+
+                        List<Content> contents =databaseHelper.getContentList(note_id);
                         draggedView.setVisibility(View.VISIBLE);
                         break;
                     case DragEvent.ACTION_DRAG_ENDED:
