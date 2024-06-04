@@ -94,6 +94,9 @@ public class text_editor extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
         setContentView(R.layout.activity_text_editor);
         databaseHelper = new DatabaseHelper(this);
         addImgButton = findViewById(R.id.but_add_img);
@@ -228,6 +231,16 @@ public class text_editor extends AppCompatActivity {
         createTime.setText(note.create_time);
         EditText title = findViewById(R.id.text_title);
         title.setText(note.title);
+        title.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                databaseHelper.updateTitle(note_id,s.toString());
+            }
+        });
         List<Content> contents = databaseHelper.getContentList(note_id);
         for(Content content:contents){
             if(content.type == TEXT){

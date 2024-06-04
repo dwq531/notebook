@@ -184,6 +184,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(sql, new String[] {String.valueOf(content_id)});
         db.close();
     }
+    public void updateTitle(long note_id,String title){
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_TITLE,title);
+        db.update(
+                NOTE_TABLE_NAME,
+                values,
+                COLUMN_NOTE_ID + "= ?",
+                new String[] {String.valueOf(note_id)});
+        db.close();
+    }
     public void deleteContent(long content_id){
         SQLiteDatabase db = getWritableDatabase();
         db.delete(CONTENT_TABLE_NAME,COLUMN_CONTENT_ID +"= ?",new String[] {String.valueOf(content_id)} );
