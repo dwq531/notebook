@@ -11,6 +11,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "users.db";
@@ -26,7 +33,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
-
+    private APIEndPoint api;
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_USERS_TABLE = "CREATE TABLE " + TABLE_NAME + "("
@@ -42,6 +49,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String CREATE_CONTENT_TABLE = String.format("CREATE TABLE %s (%s INTEGER,%s INTEGER PRIMARY KEY AUTOINCREMENT, %s TEXT,%s INTEGER,%s INTEGER)",
                 CONTENT_TABLE_NAME,COLUMN_NOTE_ID,COLUMN_CONTENT_ID,COLUMN_CONTENT,COLUMN_TYPE,COLUMN_POSITION);
         db.execSQL(CREATE_CONTENT_TABLE);
+
     }
 
     @Override
@@ -90,6 +98,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_POSITION,position);
         long row = db.insert(CONTENT_TABLE_NAME,null,values);
         db.close();
+        // 云端数据库
         return row;
     }
 

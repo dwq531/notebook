@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.notebook.APIEndPoint;
 import com.example.notebook.Content;
 import com.example.notebook.ContentAdapter;
 import com.example.notebook.DatabaseHelper;
@@ -32,6 +33,13 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
@@ -42,11 +50,16 @@ public class DashboardFragment extends Fragment {
     private DatabaseHelper databaseHelper;
     private int user_id = 0;//todo:user
     private final static int NOTEID =2;
+    private APIEndPoint api;
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         DashboardViewModel dashboardViewModel =
                 new ViewModelProvider(this).get(DashboardViewModel.class);
-
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:8000/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        api = retrofit.create(APIEndPoint.class);
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
         addButton = root.findViewById(R.id.but_add);
@@ -64,6 +77,25 @@ public class DashboardFragment extends Fragment {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
                 String time = dateFormat.format(calendar.getTime());
                 long note_id = databaseHelper.addNote(user_id,"新建笔记",time);
+                Call<ResponseBody> call = api.uploadNote(note_id,user_id,"新建笔记",time);
+                call.enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        if (response.isSuccessful()) {
+                            // 请求成功，处理响应
+                            Log.d("API","Response: " + response.body().toString());
+                        }
+                        else{
+                            Log.d("API","Error: " + response.errorBody().toString());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        // 请求失败，处理错误
+                        Log.d("API","Failure: " + t.getMessage());
+                    }
+                });
                 databaseHelper.addContent(note_id,"",0,0);
                 Log.d("text_editor", String.valueOf(note_id));
                 intent.putExtra("note_id", note_id);
@@ -88,7 +120,12 @@ public class DashboardFragment extends Fragment {
             }
         }
         else if(requestCode == EDIT_NOTE){
-
+            if (resultCode == Activity.RESULT_OK && data != null){
+                String title = data.getStringExtra("title");
+                Long note_id = data.getLongExtra("note_id",-1);
+                Log.d("notelist",title);
+                adapter.editNote(note_id,title);
+            }
             // todo
         }
     }

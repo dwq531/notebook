@@ -294,6 +294,8 @@ public class text_editor extends AppCompatActivity {
                 imageView.setTag(content_id);
                 Glide.with(this).load(imageUri).into(imageView);
                 setDrag(imageView);
+                UploadManager uploadManager = new UploadManager();
+                uploadManager.uploadContent(note_id,content_id,IMAGE,"",linearLayout.indexOfChild(imageView),imageUri,text_editor.this);
             }
         }
         else if(requestCode == TAKE_PICTURE_REQUEST && resultCode == RESULT_OK ){
