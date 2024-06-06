@@ -23,6 +23,7 @@ import com.example.notebook.ContentAdapter;
 import com.example.notebook.DatabaseHelper;
 import com.example.notebook.Note;
 import com.example.notebook.R;
+import com.example.notebook.UploadManager;
 import com.example.notebook.databinding.FragmentDashboardBinding;
 import com.example.notebook.text_editor;
 
@@ -48,6 +49,7 @@ public class DashboardFragment extends Fragment {
     private RecyclerView recyclerView;
     private ContentAdapter adapter;
     private DatabaseHelper databaseHelper;
+    private UploadManager uploadManager;
     private int user_id = 0;//todo:user
     private final static int NOTEID =2;
     private APIEndPoint api;
@@ -60,6 +62,7 @@ public class DashboardFragment extends Fragment {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         api = retrofit.create(APIEndPoint.class);
+        uploadManager = new UploadManager(getContext());
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
         addButton = root.findViewById(R.id.but_add);
@@ -77,25 +80,7 @@ public class DashboardFragment extends Fragment {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
                 String time = dateFormat.format(calendar.getTime());
                 long note_id = databaseHelper.addNote(user_id,"新建笔记",time);
-                Call<ResponseBody> call = api.uploadNote(note_id,user_id,"新建笔记",time);
-                call.enqueue(new Callback<ResponseBody>() {
-                    @Override
-                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                        if (response.isSuccessful()) {
-                            // 请求成功，处理响应
-                            Log.d("API","Response: " + response.body().toString());
-                        }
-                        else{
-                            Log.d("API","Error: " + response.errorBody().toString());
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<ResponseBody> call, Throwable t) {
-                        // 请求失败，处理错误
-                        Log.d("API","Failure: " + t.getMessage());
-                    }
-                });
+                uploadManager.addNote(note_id);
                 databaseHelper.addContent(note_id,"",0,0);
                 Log.d("text_editor", String.valueOf(note_id));
                 intent.putExtra("note_id", note_id);
@@ -138,6 +123,7 @@ public class DashboardFragment extends Fragment {
 
     private void updateNotes(){
         List<Note> notes = databaseHelper.getNoteList(user_id);
+        Log.d("adapter",notes.toString());
         for(Note note:notes){
             adapter.addItem(note.title,note.create_time,note.note_id);
         }

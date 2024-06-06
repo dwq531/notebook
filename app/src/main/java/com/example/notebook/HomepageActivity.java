@@ -27,6 +27,7 @@ public class HomepageActivity extends AppCompatActivity {
     private ActivityHomepageBinding binding;
     private APIEndPoint api;
     private int user_id = 0;
+    private UploadManager uploadManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,31 +46,8 @@ public class HomepageActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        api = retrofit.create(APIEndPoint.class);
-        Call<List<Note>> call = api.getNotes(user_id);
-        call.enqueue(new Callback<List<Note>>() {
-            @Override
-            public void onResponse(Call<List<Note>> call, Response<List<Note>> response) {
-                if (response.isSuccessful()) {
-                    // 请求成功，处理响应
-                    Log.d("API","Response: " + response.body().toString());
-                }
-                else{
-                    Log.d("API","Error: " + response.errorBody().toString());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<List<Note>> call, Throwable t) {
-                // 请求失败，处理错误
-                Log.d("API","Failure: " + t.getMessage());
-            }
-        });
+        uploadManager = new UploadManager(this);
+        uploadManager.getNotes(user_id);
     }
 
 }

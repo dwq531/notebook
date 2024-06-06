@@ -62,6 +62,7 @@ public class text_editor extends AppCompatActivity {
     private TextView audioDuration;
     private DatabaseHelper databaseHelper;
     private long note_id,user_id;
+    private  UploadManager uploadManager;
 
 
     String currentPhotoPath,currentAudioPath;
@@ -97,6 +98,7 @@ public class text_editor extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
+        uploadManager = new UploadManager(this);
         setContentView(R.layout.activity_text_editor);
         databaseHelper = new DatabaseHelper(this);
         addImgButton = findViewById(R.id.but_add_img);
@@ -203,6 +205,7 @@ public class text_editor extends AppCompatActivity {
                     public void afterTextChanged(Editable s) {
                         Log.d("text_editor",s.toString());
                         databaseHelper.updateContent(content_id, s.toString());
+                        databaseHelper.updateNoteVersion(note_id);
                     }
                 });
             }
@@ -210,6 +213,7 @@ public class text_editor extends AppCompatActivity {
         returnButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                uploadManager.uploadNote(note_id);
                 TextView title = findViewById(R.id.text_title);
                 TextView time = findViewById(R.id.create_time);
                 Intent returnIntent = new Intent();
@@ -256,6 +260,7 @@ public class text_editor extends AppCompatActivity {
                     public void afterTextChanged(Editable s) {
                         Log.d("text_editor",s.toString());
                         databaseHelper.updateContent(content.content_id, s.toString());
+                        databaseHelper.updateNoteVersion(note_id);
                     }
                 });
                 linearLayout.addView(textBlock);
@@ -294,8 +299,6 @@ public class text_editor extends AppCompatActivity {
                 imageView.setTag(content_id);
                 Glide.with(this).load(imageUri).into(imageView);
                 setDrag(imageView);
-                UploadManager uploadManager = new UploadManager();
-                uploadManager.uploadContent(note_id,content_id,IMAGE,"",linearLayout.indexOfChild(imageView),imageUri,text_editor.this);
             }
         }
         else if(requestCode == TAKE_PICTURE_REQUEST && resultCode == RESULT_OK ){
@@ -564,6 +567,7 @@ public class text_editor extends AppCompatActivity {
                             linearLayout.removeView(v);
                             long content_id = (long) v.getTag();
                             databaseHelper.deleteContent(content_id);
+                            databaseHelper.updateNoteVersion(note_id);
                         }
                         return true;
                     }
@@ -612,7 +616,8 @@ public class text_editor extends AppCompatActivity {
                         int dropPosition = linearLayout.indexOfChild(view);
                         owner.removeView(draggedView);
                         long content_id = (long) draggedView.getTag();
-                        databaseHelper.updateContentPosition(content_id,dropPosition,beforePosition);
+                        databaseHelper.updateContentPosition(content_id,dropPosition,beforePosition,true);
+                        databaseHelper.updateNoteVersion(note_id);
                         linearLayout.addView(draggedView, dropPosition);
 
                         List<Content> contents =databaseHelper.getContentList(note_id);

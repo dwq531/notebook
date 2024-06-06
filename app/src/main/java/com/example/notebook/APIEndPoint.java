@@ -20,15 +20,19 @@ public interface APIEndPoint {
     @GET("notes/get_notes/{user_id}/")
     Call<List<Note>> getNotes(@Path("user_id") int user_id);
 
+    @GET("notes/get_note/{note_id}/")
+    Call<Note> getNote(@Path("note_id") long note_id);
+
     @GET("notes/get_note_content/{note_id}/")
-    Call<List<Note>> getContents(@Path("note_id") int note_id);
+    Call<NoteResponse> getContents(@Path("note_id") long note_id);
 
     @FormUrlEncoded
     @POST("notes/upload_note/")
     Call<ResponseBody> uploadNote(@Field("note_id") long noteId,
                                   @Field("user_id") int userId,
                                   @Field("title") String title,
-                                  @Field("create_time") String time);
+                                  @Field("create_time") String time,
+                                  @Field("version") long version);
 
     @Multipart
     @POST("notes/upload_content/")
@@ -39,6 +43,10 @@ public interface APIEndPoint {
             @Part("text") RequestBody text,
             @Part("file_url") RequestBody fileUrl,
             @Part("position") RequestBody position,
+            @Part("version") RequestBody version,
             @Part MultipartBody.Part file
     );
+
+    @GET("notes/download_file/{content_id}/")
+    Call<ResponseBody> downloadFile(@Path("content_id") long content_id);
 }

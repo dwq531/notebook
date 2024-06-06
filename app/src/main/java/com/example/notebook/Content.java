@@ -6,6 +6,7 @@ public class Content {
     public String content;
     public int type;
     public int position;
+    public long version;
     public enum Type{
         TEXT,
         IMAGE,
