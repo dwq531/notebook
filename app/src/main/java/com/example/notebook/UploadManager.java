@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Log;
 
@@ -47,12 +48,54 @@ public class UploadManager {
         this.context = context;
         databaseHelper = new DatabaseHelper(context);
     }
+    private String getRealPathFromURI(Uri uri) {
+        String filePath = null;
+        if ("content".equals(uri.getScheme())) {
+            String[] projection = { MediaStore.Images.Media.DATA };
+            try (Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                    filePath = cursor.getString(columnIndex);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if ("file".equals(uri.getScheme())) {
+            filePath = uri.getPath();
+        }
+        return filePath;
+    }
+    public File getFileFromUri(Uri uri,String ext) {
+        File file = null;
+        try {
+            ContentResolver contentResolver = context.getContentResolver();
+            InputStream inputStream = contentResolver.openInputStream(uri);
+            File tempFile = new File(context.getCacheDir(), System.currentTimeMillis()+ext);
 
+            try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+                int read;
+                byte[] buffer = new byte[8 * 1024];
+                while ((read = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, read);
+                }
+            }
+            file = tempFile;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return file;
+    }
     public void uploadContent(long noteId, long contentId, int contentType, String text,int position, Uri fileuri,long version) {
         File file = null;
         if(contentType!=0)
         {
-            file = new File(fileuri.getPath());
+            String ext=".jpg";
+            if(contentType==2)
+                ext=".3gp";
+            file = getFileFromUri(fileuri,ext);
+            if(file==null)
+                file = new File(fileuri.getPath());
             if(file == null )
                 return;
         }

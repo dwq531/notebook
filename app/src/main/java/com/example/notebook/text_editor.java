@@ -117,9 +117,7 @@ public class text_editor extends AppCompatActivity {
                     public boolean onMenuItemClick(MenuItem item) {
                         // 拍摄照片
                         if(item.getItemId() == R.id.take_photo){
-                            if (ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-                                    ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
-                                    ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                            if (ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                                 ActivityCompat.requestPermissions(text_editor.this, new String[]{
                                         Manifest.permission.CAMERA,
                                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
