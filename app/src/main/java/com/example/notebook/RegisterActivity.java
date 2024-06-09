@@ -4,8 +4,8 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.notebook.R;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -29,11 +29,23 @@ public class RegisterActivity extends AppCompatActivity {
 
             if (username.isEmpty() || password.isEmpty()) {
                 Toast.makeText(RegisterActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            } else if (databaseHelper.isUsernameExists(username)) {
+                showUsernameExistsDialog();
             } else {
                 databaseHelper.addUser(username, password);
                 Toast.makeText(RegisterActivity.this, "User registered successfully", Toast.LENGTH_SHORT).show();
+                // 打印所有用户信息
+                databaseHelper.printAllUsers();
                 finish();
             }
         });
+    }
+
+    private void showUsernameExistsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("用户名已存在")
+                .setMessage("当前用户名已存在，请修改用户名")
+                .setPositiveButton("好的", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 }
