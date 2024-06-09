@@ -61,8 +61,9 @@ public class HomeFragment extends Fragment {
 
     private void loadUserInfo() {
         // 从数据库加载用户信息并显示
+        Log.d("loadUserinfo","into loadUserInfo");
         String username = databaseHelper.getCurrentUsername();
-        // Log.d("loadUsername",username);
+        //Log.d("loadUsername",username);
         String signature = databaseHelper.getCurrentUserSignature();
 
         if (username != null) {
