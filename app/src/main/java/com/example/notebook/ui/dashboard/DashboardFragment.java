@@ -45,13 +45,13 @@ public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
     Button addButton,searchButton;
-    private final int ADD_NOTE = 0,EDIT_NOTE=1;
     private RecyclerView recyclerView;
     private ContentAdapter adapter;
     private DatabaseHelper databaseHelper;
     private UploadManager uploadManager;
     private int user_id = 0;//todo:user
     private final static int NOTEID =2;
+    private final int ADD_NOTE = 0,EDIT_NOTE=1;
     private APIEndPoint api;
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -91,8 +91,31 @@ public class DashboardFragment extends Fragment {
         updateNotes();
         return root;
     }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+    public void clearNotes(){
+
+    }
+    public void updateNotes(){
+        List<Note> notes = databaseHelper.getNoteList(user_id);
+        Log.d("adapter",notes.toString());
+        for(Note note:notes){
+            adapter.addItem(note.title,note.create_time,note.note_id);
+        }
+    }
+    public void addNoteItem(String title,String time,long note_id){
+        adapter.addItem(title,time,note_id);
+    }
+    public void editNoteItem(String title,long note_id){
+        adapter.editNote(note_id,title);
+    }
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if (requestCode == ADD_NOTE) {
             if (resultCode == Activity.RESULT_OK) {
                 if (data != null) {
@@ -100,7 +123,8 @@ public class DashboardFragment extends Fragment {
                     String time = data.getStringExtra("time");
                     Long note_id = data.getLongExtra("note_id",-1);
                     // 新增note block
-                    adapter.addItem(title,time,note_id);
+                    addNoteItem(title,time,note_id);
+
                 }
             }
         }
@@ -109,23 +133,10 @@ public class DashboardFragment extends Fragment {
                 String title = data.getStringExtra("title");
                 Long note_id = data.getLongExtra("note_id",-1);
                 Log.d("notelist",title);
-                adapter.editNote(note_id,title);
+                editNoteItem(title,note_id);
+
             }
             // todo
-        }
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
-    }
-
-    private void updateNotes(){
-        List<Note> notes = databaseHelper.getNoteList(user_id);
-        Log.d("adapter",notes.toString());
-        for(Note note:notes){
-            adapter.addItem(note.title,note.create_time,note.note_id);
         }
     }
 }

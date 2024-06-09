@@ -1,17 +1,22 @@
 package com.example.notebook;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.example.notebook.ui.dashboard.DashboardFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
@@ -33,8 +38,11 @@ public class HomepageActivity extends AppCompatActivity {
     private ActivityHomepageBinding binding;
     private APIEndPoint api;
     private int user_id = 0;
+    private final int ADD_NOTE = 0,EDIT_NOTE=1;
     private UploadManager uploadManager;
     private  static int REQUEST_READ_EXTERNAL_STORAGE=0;
+    private NavController navController;
+    private Fragment navHostFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +58,8 @@ public class HomepageActivity extends AppCompatActivity {
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_home, R.id.navigation_notebook)
                 .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
+        navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
+        navHostFragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -74,6 +83,20 @@ public class HomepageActivity extends AppCompatActivity {
             }
         }
     }
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment_activity_main);
 
+        if (requestCode == ADD_NOTE || requestCode == EDIT_NOTE) {
+            if (navHostFragment instanceof NavHostFragment) {
+                List<Fragment> fragments = navHostFragment.getChildFragmentManager().getFragments();
+                for (Fragment fragment : fragments) {
+                    if (fragment instanceof DashboardFragment) {
+                        fragment.onActivityResult(requestCode, resultCode, data);
 
+                    }
+                }
+            }
+        }
+    }
 }
