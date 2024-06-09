@@ -49,4 +49,9 @@ public interface APIEndPoint {
 
     @GET("notes/download_file/{content_id}/")
     Call<ResponseBody> downloadFile(@Path("content_id") long content_id);
+
+    @POST("notes/delete_note/{note_id}/")
+    Call<ResponseBody> deleteNote(@Path("note_id") long note_id);
+    @POST("notes/delete_content/{content_id}/")
+    Call<ResponseBody> deleteContent(@Path("content_id") long content_id);
 }

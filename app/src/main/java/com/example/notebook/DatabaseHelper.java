@@ -42,11 +42,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_PASSWORD + " TEXT" + ")";
         db.execSQL(CREATE_USERS_TABLE);
         // 笔记列表：用户id，笔记id，笔记题目，创建时间
-        String CREATE_NOTE_TABLE = String.format("CREATE TABLE %s (%s INTEGER, %s INTEGER PRIMARY KEY AUTOINCREMENT, %s TEXT,%s TEXT,%s INTEGER)",
+        String CREATE_NOTE_TABLE = String.format("CREATE TABLE %s (%s INTEGER, %s INTEGER PRIMARY KEY, %s TEXT,%s TEXT,%s INTEGER)",
                 NOTE_TABLE_NAME,COLUMN_ID,COLUMN_NOTE_ID,COLUMN_TITLE,COLUMN_CREATE_TIME,COLUMN_VERSION);
         db.execSQL(CREATE_NOTE_TABLE);
         // 笔记内容：所属笔记id，内容id，内容，类型,位置
-        String CREATE_CONTENT_TABLE = String.format("CREATE TABLE %s (%s INTEGER,%s INTEGER PRIMARY KEY AUTOINCREMENT, %s TEXT,%s INTEGER,%s INTEGER,%s INTEGER)",
+        String CREATE_CONTENT_TABLE = String.format("CREATE TABLE %s (%s INTEGER,%s INTEGER PRIMARY KEY, %s TEXT,%s INTEGER,%s INTEGER,%s INTEGER)",
                 CONTENT_TABLE_NAME,COLUMN_NOTE_ID,COLUMN_CONTENT_ID,COLUMN_CONTENT,COLUMN_TYPE,COLUMN_POSITION,COLUMN_VERSION);
         db.execSQL(CREATE_CONTENT_TABLE);
 
@@ -90,6 +90,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return row;
     }
+    public long addNote(int user,String title,String create_time,long note_id){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_ID,user);
+        values.put(COLUMN_TITLE,title);
+        values.put(COLUMN_CREATE_TIME,create_time);
+        values.put(COLUMN_VERSION,System.currentTimeMillis());
+        values.put(COLUMN_NOTE_ID,note_id);
+        long row = db.insert(NOTE_TABLE_NAME,null,values);
+        db.close();
+        return row;
+    }
     public long addContent(long note,String content,int type,int position){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -98,6 +110,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_TYPE,type);
         values.put(COLUMN_POSITION,position);
         values.put(COLUMN_VERSION,System.currentTimeMillis());
+        long row = db.insert(CONTENT_TABLE_NAME,null,values);
+        db.close();
+        // 云端数据库
+        return row;
+    }
+    public long addContent(long note,String content,int type,int position,long content_id){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NOTE_ID,note);
+        values.put(COLUMN_CONTENT,content);
+        values.put(COLUMN_TYPE,type);
+        values.put(COLUMN_POSITION,position);
+        values.put(COLUMN_VERSION,System.currentTimeMillis());
+        values.put(COLUMN_CONTENT_ID,content_id);
         long row = db.insert(CONTENT_TABLE_NAME,null,values);
         db.close();
         // 云端数据库
@@ -195,7 +221,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             if (before_pos > position) {
                 String sql = "UPDATE " + CONTENT_TABLE_NAME + " SET " + COLUMN_POSITION + " = " + COLUMN_POSITION + " + 1 WHERE " + COLUMN_POSITION + " >= ? AND " + COLUMN_POSITION + " < ?";
                 db.execSQL(sql, new String[]{String.valueOf(position), String.valueOf(before_pos)});
-                sql = "UPDATE " + CONTENT_TABLE_NAME + " SET " + COLUMN_VERSION + " = " + String.valueOf(version) + "WHERE " + COLUMN_POSITION + " >= ? AND " + COLUMN_POSITION + " < ?";
+                sql = "UPDATE " + CONTENT_TABLE_NAME + " SET " + COLUMN_VERSION + " = " + String.valueOf(version) + " WHERE " + COLUMN_POSITION + " >= ? AND " + COLUMN_POSITION + " < ?";
                 db.execSQL(sql, new String[]{String.valueOf(position), String.valueOf(before_pos)});
             }
             // before<after, before<pos<=after 的pos-1
@@ -226,12 +252,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
     public void deleteContent(long content_id){
         SQLiteDatabase db = getWritableDatabase();
+        Content content = getContent(content_id);
+        // 更新后面content的位置序号
+        String sql = "UPDATE " + CONTENT_TABLE_NAME + " SET " + COLUMN_POSITION + " = " + COLUMN_POSITION + " - 1 WHERE " + COLUMN_POSITION + " > ? ";
+        db.execSQL(sql, new String[]{String.valueOf(content.position)});
+        sql = "UPDATE " + CONTENT_TABLE_NAME + " SET " + COLUMN_VERSION + " = " + String.valueOf(System.currentTimeMillis()) + " WHERE " + COLUMN_POSITION + " > ? ";
         db.delete(CONTENT_TABLE_NAME,COLUMN_CONTENT_ID +"= ?",new String[] {String.valueOf(content_id)} );
+        db.execSQL(sql, new String[]{String.valueOf(content.position)});
         db.close();
     }
     public void deleteNote(long note_id){
         SQLiteDatabase db = getWritableDatabase();
         db.delete(NOTE_TABLE_NAME,COLUMN_NOTE_ID +"= ?",new String[] {String.valueOf(note_id)} );
+        db.delete(CONTENT_TABLE_NAME,COLUMN_NOTE_ID +"= ?",new String[] {String.valueOf(note_id)} );
         db.close();
     }
     public void updateNoteVersion(long note_id){

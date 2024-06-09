@@ -224,27 +224,30 @@ public class UploadManager {
                                 databaseHelper.updateContentPosition(content.content_id, content.position, content.position, false);
                             }
                             // 本地版本新 todo
+                            else{
+                                uploadContent(note_id,localctt.content_id,localctt.type,localctt.content,localctt.position, Uri.parse(localctt.content),localctt.version);
+                            }
                         }
                         // 本地没有
                         else{
                             // 本地note版本旧，下载到本地
                             if(localnote==null || localnote.version<note.version){
                                 if(content.type!=0){
-                                    databaseHelper.addContent(note_id,content.file_url, content.type, content.position);
+                                    databaseHelper.addContent(note_id,content.file_url, content.type, content.position,content.content_id);
                                     downloadFile(content.content_id, Uri.parse(content.file_url),(content.type==1));
                                 }
                                 else{
-                                    databaseHelper.addContent(note_id,content.text, content.type, content.position);
+                                    databaseHelper.addContent(note_id,content.text, content.type, content.position,content.content_id);
                                 }
                             }
                             // 本地note版本新，删除云端版本 todo
                             else{
-
+                                delete_content(content.content_id);
                             }
                         }
                     }
                     if(localnote ==null)
-                        databaseHelper.addNote(note.user_id,note.title,note.create_time);
+                        databaseHelper.addNote(note.user_id,note.title,note.create_time,note.note_id);
                     else
                         databaseHelper.updateTitle(note_id, note.title);
                     Log.d("uploadManager", "get content successful");
@@ -287,11 +290,13 @@ public class UploadManager {
             if(isImg)
             {
                 storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                String name = file.getName();
                 file = File.createTempFile(
-                        file.getName(),  /* 前缀 */
+                        name,  /* 前缀 */
                         ".jpg",         /* 后缀 */
                         storageDir      /* 目录 */
                 );
+                Log.d("writeResponseBodyToDisk",storageDir.getPath());
             }
 
             else {
@@ -315,15 +320,59 @@ public class UploadManager {
                 outputStream.write(fileReader, 0, bytesRead);
             }
             outputStream.flush();
-            Log.d("writeResponseBodyToDisk", "File written to: " + localPath);
             String authority = context.getPackageName() + ".fileProvider";
             Uri uri = FileProvider.getUriForFile(context, authority, file);
+            Log.d("writeResponseBodyToDisk", "File written to: " + uri);
             return uri;
         } catch (IOException e) {
             Log.e("writeResponseBodyToDisk", "Failed to write file to disk", e);
             return null;
         }
     }
+    public void delete_note(long note_id){
+        Call<ResponseBody> call = api.deleteNote(note_id);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    // 请求成功，处理响应
+                    Log.d("API","Response: " + response.body().toString());
+                }
+                else{
+                    Log.d("API","Error: " + response.errorBody().toString());
+                }
+            }
 
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                // 请求失败，处理错误
+                Log.d("API","Failure: " + t.getMessage());
+            }
+        });
+    }
+
+    public void delete_content(long content_id){
+        Call<ResponseBody> call = api.deleteContent(content_id);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    // 请求成功，处理响应
+                    Log.d("API","Response: " + response.body().toString());
+                }
+                else{
+                    Log.d("API","Error: " + response.errorBody().toString());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                // 请求失败，处理错误
+                Log.d("API","Failure: " + t.getMessage());
+            }
+        });
+
+
+    }
 
 }

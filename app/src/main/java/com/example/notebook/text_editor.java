@@ -193,6 +193,7 @@ public class text_editor extends AppCompatActivity {
                 linearLayout.addView(textBlock);
                 setDrag(textBlock);
                 long content_id = databaseHelper.addContent(note_id,"",TEXT,linearLayout.indexOfChild(textBlock));
+                textBlock.setTag(content_id);
                 EditText editText = textBlock.findViewById(R.id.text_content);
                 editText.addTextChangedListener(new TextWatcher() {
                     @Override
@@ -270,6 +271,7 @@ public class text_editor extends AppCompatActivity {
                 imageView.setTag(content.content_id);
                 setDrag(imageView);
                 linearLayout.addView(imageView);
+                Log.d("text_editor",content.content);
                 Glide.with(this).load(content.content).into(imageView);
             }
             else if(content.type == AUDIO){
@@ -565,6 +567,7 @@ public class text_editor extends AppCompatActivity {
                             linearLayout.removeView(v);
                             long content_id = (long) v.getTag();
                             databaseHelper.deleteContent(content_id);
+                            uploadManager.delete_content(content_id);
                             databaseHelper.updateNoteVersion(note_id);
                         }
                         return true;
