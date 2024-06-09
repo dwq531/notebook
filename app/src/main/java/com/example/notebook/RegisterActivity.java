@@ -32,6 +32,8 @@ public class RegisterActivity extends AppCompatActivity {
             } else {
                 databaseHelper.addUser(username, password);
                 Toast.makeText(RegisterActivity.this, "User registered successfully", Toast.LENGTH_SHORT).show();
+                // 打印所有用户信息
+                databaseHelper.printAllUsers();
                 finish();
             }
         });

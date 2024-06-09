@@ -63,7 +63,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_IMAGE_URL, "drawable/default_profileimage.xml");
         // 用户创建时个性签名默认为空
         values.put(COLUMN_SIGNATURE, "");
-        Log.d("adduser",COLUMN_USERNAME);
+        Log.d("adduser",username);
         db.insert(TABLE_USER, null, values);
         db.close();
     }
@@ -201,4 +201,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void logoutCurrentUser() {
         currentUserId = -1;
     }
+
+    // 打印所有用户信息
+    public void printAllUsers() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + TABLE_USER;
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                int id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_USER_ID));
+                String username = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USERNAME));
+                String password = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PASSWORD));
+                String signature = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SIGNATURE));
+                String imageUrl = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URL));
+
+                Log.d("DatabaseHelper", "ID: " + id + ", Username: " + username + ", Password: " + password
+                        + ", Signature: " + signature + ", Image URL: " + imageUrl);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+    }
+
 }

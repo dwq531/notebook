@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,6 +62,7 @@ public class HomeFragment extends Fragment {
     private void loadUserInfo() {
         // 从数据库加载用户信息并显示
         String username = databaseHelper.getCurrentUsername();
+        // Log.d("loadUsername",username);
         String signature = databaseHelper.getCurrentUserSignature();
 
         if (username != null) {
