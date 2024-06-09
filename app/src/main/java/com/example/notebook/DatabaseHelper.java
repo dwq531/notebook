@@ -56,7 +56,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_USERS_TABLE);
         // 笔记列表：用户id，笔记id，笔记题目，创建时间
         String CREATE_NOTE_TABLE = String.format("CREATE TABLE %s (%s INTEGER, %s INTEGER PRIMARY KEY, %s TEXT,%s TEXT,%s INTEGER)",
-                NOTE_TABLE_NAME,COLUMN_ID,COLUMN_NOTE_ID,COLUMN_TITLE,COLUMN_CREATE_TIME,COLUMN_VERSION);
+                NOTE_TABLE_NAME,COLUMN_USER_ID,COLUMN_NOTE_ID,COLUMN_TITLE,COLUMN_CREATE_TIME,COLUMN_VERSION);
         db.execSQL(CREATE_NOTE_TABLE);
         // 笔记内容：所属笔记id，内容id，内容，类型,位置
         String CREATE_CONTENT_TABLE = String.format("CREATE TABLE %s (%s INTEGER,%s INTEGER PRIMARY KEY, %s TEXT,%s INTEGER,%s INTEGER,%s INTEGER)",
@@ -277,7 +277,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public long addNote(int user,String title,String create_time){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(COLUMN_ID,user);
+        values.put(COLUMN_USER_ID,user);
         values.put(COLUMN_TITLE,title);
         values.put(COLUMN_CREATE_TIME,create_time);
         values.put(COLUMN_VERSION,System.currentTimeMillis());
@@ -288,7 +288,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public long addNote(int user,String title,String create_time,long note_id){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(COLUMN_ID,user);
+        values.put(COLUMN_USER_ID,user);
         values.put(COLUMN_TITLE,title);
         values.put(COLUMN_CREATE_TIME,create_time);
         values.put(COLUMN_VERSION,System.currentTimeMillis());
@@ -327,7 +327,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public List<Note> getNoteList(int user){
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query(NOTE_TABLE_NAME,null,COLUMN_ID+"= ?",new String[]{String.valueOf(user)},null,null,null);
+        Cursor cursor = db.query(NOTE_TABLE_NAME,null,COLUMN_USER_ID+"= ?",new String[]{String.valueOf(user)},null,null,null);
         List<Note> notes = new ArrayList<>();
         while(cursor.moveToNext()){
             Note note = new Note();
@@ -351,7 +351,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             note.note_id = note_id;
             note.title = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TITLE));
             note.create_time = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATE_TIME));
-            note.user_id = Integer.parseInt(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ID)));;
+            note.user_id = Integer.parseInt(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USER_ID)));;
             note.version = Long.parseLong(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_VERSION)));;
         }
         cursor.close();
