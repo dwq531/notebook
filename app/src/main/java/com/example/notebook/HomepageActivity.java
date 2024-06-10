@@ -69,9 +69,6 @@ public class HomepageActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_IMAGES}, REQUEST_READ_MEDIA_IMAGES);
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_AUDIO}, REQUEST_READ_MEDIA_AUDIO);
-        }
         databaseHelper = new DatabaseHelper(this);
         user_id = databaseHelper.getCurrentUserId();
         uploadManager = new UploadManager(this);
@@ -87,14 +84,6 @@ public class HomepageActivity extends AppCompatActivity {
             } else {
                 // Permission denied, inform the user that the permission is necessary
                 Toast.makeText(this, "Read media images permission is required to access files.", Toast.LENGTH_LONG).show();
-            }
-        }
-        else if (requestCode == REQUEST_READ_MEDIA_AUDIO) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Read media audio permission granted.", Toast.LENGTH_LONG).show();
-            } else {
-                // Permission denied, inform the user that the permission is necessary
-                Toast.makeText(this, "Read media audio permission is required to access files.", Toast.LENGTH_LONG).show();
             }
         }
     }

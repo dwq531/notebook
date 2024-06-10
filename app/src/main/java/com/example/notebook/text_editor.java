@@ -36,6 +36,7 @@ import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
@@ -51,7 +52,7 @@ import java.util.Locale;
 public class text_editor extends AppCompatActivity {
     Button addImgButton,addAudioButton,addTextButton,returnButton;
     LinearLayout linearLayout;
-    public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION=5;
+    public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION=5,REQUEST_READ_MEDIA_AUDIO=6;
     private static int TEXT=0,IMAGE=1,AUDIO=2;
     private MediaPlayer mediaPlayer=null;
     private View playingAudioBlock = null;
@@ -173,9 +174,13 @@ public class text_editor extends AppCompatActivity {
                         }
                         // 选择音频文件
                         else if(item.getItemId() == R.id.audio_file){
-                            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                            intent.setType("audio/*");
-                            startActivityForResult(intent, PICK_AUDIO_REQUEST);
+                            if (ContextCompat.checkSelfPermission(text_editor.this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                                ActivityCompat.requestPermissions(text_editor.this, new String[]{Manifest.permission.READ_MEDIA_AUDIO}, REQUEST_READ_MEDIA_AUDIO);
+                            }else{
+                                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                                intent.setType("audio/*");
+                                startActivityForResult(intent, PICK_AUDIO_REQUEST);
+                            }
                             return true;
                         }
                         else {
@@ -452,13 +457,23 @@ public class text_editor extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startRecord();
             } else {
-                // 权限被用户拒绝，你可以在这里处理权限被拒绝的情况
-                return;
+                Toast.makeText(this, "record audio permission is required to access files.", Toast.LENGTH_LONG).show();
             }
         }
-        if(requestCode == CAMERA_PERMISSION){
+        else if(requestCode == CAMERA_PERMISSION){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startCamera();
+            }else{
+                Toast.makeText(this, "Camera permission is required to access files.", Toast.LENGTH_LONG).show();
+            }
+        }
+        else if (requestCode == REQUEST_READ_MEDIA_AUDIO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("audio/*");
+                startActivityForResult(intent, PICK_AUDIO_REQUEST);
+            } else {
+                Toast.makeText(this, "Read media audio permission is required to access files.", Toast.LENGTH_LONG).show();
             }
         }
     }

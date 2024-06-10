@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 // 查询云端服务器的用户信息
                 Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl("http://10.0.2.2:8000/")
+                        .baseUrl("http://183.172.155.18:8000/")
                         .addConverterFactory(GsonConverterFactory.create())
                         .build();
                 APIEndPoint api = retrofit.create(APIEndPoint.class);
