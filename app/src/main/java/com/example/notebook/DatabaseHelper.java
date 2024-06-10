@@ -105,7 +105,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return isValidUser;
     }
 
-    private int getCurrentUserId() {
+    public int getCurrentUserId() {
         return sharedPreferences.getInt(KEY_CURRENT_USER_ID, -1);
     }
 
@@ -231,9 +231,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    public int getNoteCount() {
-        return 0; // 实现获取笔记数量的逻辑
-    }
 
     public void logoutCurrentUser() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
