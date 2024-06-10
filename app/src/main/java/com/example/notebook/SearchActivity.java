@@ -60,7 +60,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void searchNotes(String query) {
-        List<Note> notes = databaseHelper.searchNotes(query);  // 需要在DatabaseHelper中实现该方法
+        List<Note> notes = databaseHelper.searchNotes(query);
         // adapter.clearItems();
         for (Note note : notes) {
             adapter.addItem(note.title, note.create_time, note.note_id);

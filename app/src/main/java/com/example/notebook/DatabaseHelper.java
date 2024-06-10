@@ -237,19 +237,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             return 0; // 如果没有当前用户，返回 0
         }
 
-        SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT COUNT(*) FROM " + NOTE_TABLE_NAME + " WHERE " + COLUMN_USER_ID + "=?";
-        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(currentUserId)});
-
-        int count = 0;
-        if (cursor.moveToFirst()) {
-            count = cursor.getInt(0); // 获取查询结果的第一个值，即计数值
-        }
-
-        cursor.close();
-        db.close();
-
-        return count;
+        List<Note> userNotes = getNoteList(currentUserId);
+        Log.d("searchNotes", "Number of user notes: " + userNotes.size());
+        return userNotes.size();
     }
 
 
@@ -358,6 +348,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         db.close();
+        Log.d("getNoteList", String.valueOf(notes.size()));
         return notes;
     }
     public Note getNote(long note_id){
@@ -492,35 +483,131 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    public List<Note> searchNotes(String keyword) {
-        List<Note> notes = new ArrayList<>();
-        int currentUserId = getCurrentUserId();
-        if (currentUserId == -1) {
-            Log.d("searchNotes","currentUserId=-1");
-            return notes; // 如果没有当前用户，返回空列表
-        }
 
+    public void printAllNotes() {
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT * FROM " + NOTE_TABLE_NAME + " WHERE " + COLUMN_USER_ID + "=? AND ("
-                + COLUMN_TITLE + " LIKE ? OR " + COLUMN_NOTE_ID + " IN ("
-                + "SELECT " + COLUMN_NOTE_ID + " FROM " + CONTENT_TABLE_NAME + " WHERE " + COLUMN_CONTENT + " LIKE ?))";
-        String keywordPattern = "%" + keyword + "%";
-        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(currentUserId), keywordPattern, keywordPattern});
+
+        // SQL 查询语句，获取所有笔记的标题和内容
+        String query = "SELECT " + NOTE_TABLE_NAME + "." + COLUMN_NOTE_ID + ", "
+                + NOTE_TABLE_NAME + "." + COLUMN_TITLE + ", "
+                + CONTENT_TABLE_NAME + "." + COLUMN_CONTENT
+                + " FROM " + NOTE_TABLE_NAME
+                + " LEFT JOIN " + CONTENT_TABLE_NAME
+                + " ON " + NOTE_TABLE_NAME + "." + COLUMN_NOTE_ID + " = " + CONTENT_TABLE_NAME + "." + COLUMN_NOTE_ID;
+
+        Cursor cursor = db.rawQuery(query, null);
 
         while (cursor.moveToNext()) {
-            Note note = new Note();
-            note.note_id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
-            note.title = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TITLE));
-            note.create_time = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATE_TIME));
-            note.user_id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_USER_ID));
-            note.version = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_VERSION));
-            Log.d("searchNotes", note.toString());
-            notes.add(note);
+            long noteId = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            String title = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TITLE));
+            String content = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CONTENT));
+
+            Log.d("printAllNotes", "Note ID: " + noteId + ", Title: " + title + ", Content: " + content);
         }
 
         cursor.close();
         db.close();
-        return notes;
     }
 
+
+    /*public List<Note> searchNotes(String keyword) {
+        // 调用 printAllNotes 方法输出当前所有笔记的标题和内容
+        printAllNotes();
+
+        List<Note> notes = new ArrayList<>();
+        int currentUserId = getCurrentUserId();
+        if (currentUserId == -1) {
+            Log.d("searchNotes", "currentUserId=-1");
+            return notes; // 如果没有当前用户，返回空列表
+        }
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        String keywordPattern = "%" + keyword + "%";
+        Log.d("searchNotes", "keywordPattern: " + keywordPattern);
+
+        // 查询标题匹配的笔记
+        String titleQuery = "SELECT * FROM " + NOTE_TABLE_NAME + " WHERE " + COLUMN_USER_ID + "=? AND " + COLUMN_TITLE + " LIKE ?";
+        Cursor titleCursor = db.rawQuery(titleQuery, new String[]{String.valueOf(currentUserId), keywordPattern});
+
+        // 添加调试信息，输出标题匹配的内容
+        Log.d("searchNotes", "Title Matching results count: " + titleCursor.getCount());
+
+        while (titleCursor.moveToNext()) {
+            Note note = new Note();
+            note.note_id = titleCursor.getLong(titleCursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            note.title = titleCursor.getString(titleCursor.getColumnIndexOrThrow(COLUMN_TITLE));
+            note.create_time = titleCursor.getString(titleCursor.getColumnIndexOrThrow(COLUMN_CREATE_TIME));
+            note.user_id = titleCursor.getInt(titleCursor.getColumnIndexOrThrow(COLUMN_USER_ID));
+            note.version = titleCursor.getLong(titleCursor.getColumnIndexOrThrow(COLUMN_VERSION));
+
+            Log.d("searchNotes", "Matched Title: " + note.title);
+            Log.d("searchNotes", note.toString());
+            notes.add(note);
+        }
+        titleCursor.close();
+
+        // 查询内容匹配的笔记
+        String contentQuery = "SELECT DISTINCT " + NOTE_TABLE_NAME + ".* FROM " + NOTE_TABLE_NAME + " INNER JOIN " + CONTENT_TABLE_NAME
+                + " ON " + NOTE_TABLE_NAME + "." + COLUMN_NOTE_ID + " = " + CONTENT_TABLE_NAME + "." + COLUMN_NOTE_ID
+                + " WHERE " + NOTE_TABLE_NAME + "." + COLUMN_USER_ID + "=? AND " + CONTENT_TABLE_NAME + "." + COLUMN_CONTENT + " LIKE ?";
+        Cursor contentCursor = db.rawQuery(contentQuery, new String[]{String.valueOf(currentUserId), keywordPattern});
+
+        // 添加调试信息，输出内容匹配的内容
+        Log.d("searchNotes", "Content Matching results count: " + contentCursor.getCount());
+
+        while (contentCursor.moveToNext()) {
+            Note note = new Note();
+            note.note_id = contentCursor.getLong(contentCursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            note.title = contentCursor.getString(contentCursor.getColumnIndexOrThrow(COLUMN_TITLE));
+            note.create_time = contentCursor.getString(contentCursor.getColumnIndexOrThrow(COLUMN_CREATE_TIME));
+            note.user_id = contentCursor.getInt(contentCursor.getColumnIndexOrThrow(COLUMN_USER_ID));
+            note.version = contentCursor.getLong(contentCursor.getColumnIndexOrThrow(COLUMN_VERSION));
+
+            Log.d("searchNotes", "Matched Content for Note ID: " + note.note_id);
+
+            // 检查内容是否匹配并输出匹配的内容
+            Cursor matchedContentCursor = db.rawQuery("SELECT " + COLUMN_CONTENT + " FROM " + CONTENT_TABLE_NAME + " WHERE " + COLUMN_NOTE_ID + " = ? AND " + COLUMN_CONTENT + " LIKE ?", new String[]{String.valueOf(note.note_id), keywordPattern});
+            while (matchedContentCursor.moveToNext()) {
+                String matchedContent = matchedContentCursor.getString(matchedContentCursor.getColumnIndexOrThrow(COLUMN_CONTENT));
+                Log.d("searchNotes", "Matched Content: " + matchedContent);
+            }
+            matchedContentCursor.close();
+
+            Log.d("searchNotes", note.toString());
+            notes.add(note);
+        }
+        contentCursor.close();
+
+        db.close();
+        return notes;
+    }*/
+
+    public List<Note> searchNotes(String keyword) {
+        List<Note> notes = new ArrayList<>();
+        int currentUserId = getCurrentUserId();
+        if (currentUserId == -1) {
+            Log.d("searchNotes", "No current user found, returning empty list");
+            return notes; // 如果没有当前用户，返回空列表
+        }
+
+        Log.d("searchNotes", "Current user ID: " + currentUserId);
+
+        List<Note> userNotes = getNoteList(currentUserId);
+        Log.d("searchNotes", "Number of user notes: " + userNotes.size());
+
+        for (Note note : userNotes) {
+            Log.d("searchNotes", "Processing note: " + note.title);
+            List<Content> contents = getContentList(note.note_id);
+            Log.d("searchNotes", "Number of contents in note: " + contents.size());
+            for (Content content : contents) {
+                Log.d("searchNotes", "Processing content in note: " + content.content);
+                if (content.content.contains(keyword) || note.title.contains(keyword)) {
+                    notes.add(note);
+                    Log.d("searchNotes", "Match found for keyword: " + keyword);
+                }
+            }
+        }
+
+        return notes;
+    }
 }
