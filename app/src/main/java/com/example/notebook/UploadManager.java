@@ -34,9 +34,9 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class UploadManager {
-    private APIEndPoint api;
-    private DatabaseHelper databaseHelper ;
-    private Context context;
+    private final APIEndPoint api;
+    private final DatabaseHelper databaseHelper ;
+    private final Context context;
 
     public UploadManager(Context context) {
         Retrofit retrofit = new Retrofit.Builder()
@@ -374,5 +374,114 @@ public class UploadManager {
 
 
     }
+    public void upload_user(int user_id){
+        User user = databaseHelper.getUser(user_id);
+        RequestBody userIdPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(user_id));
+        RequestBody passwordPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(user.password));
+        RequestBody usernamePart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(user.username));
+        RequestBody signatruePart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(user.signatrue));
+        RequestBody urlPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(user.image_url));
+        RequestBody versionPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(user.version));
+        File file = null;
+        MultipartBody.Part filePart = null;
+        if(user.image_url!=null) {
+            file = getFileFromUri(Uri.parse(user.image_url), ".jpg");
+            RequestBody fileRequestBody = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+            filePart = MultipartBody.Part.createFormData("image", file.getName(), fileRequestBody);
+        }
 
+        Call<ResponseBody> call = api.uploadUser(userIdPart,passwordPart,usernamePart,signatruePart,urlPart,versionPart,filePart);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    Log.d("API","Response: " + response.body().toString());
+                }
+                else{
+                    Log.d("API","Error: " + response.errorBody().toString());
+                }
+            }
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                // 请求失败，处理错误
+                Log.d("API","Failure: " + t.getMessage());
+            }
+        });
+    }
+    public void get_user(String username){
+        Call<User> call = api.get_user_by_name(username);
+        call.enqueue(new Callback<User>() {
+            @Override
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful()) {
+                    User user = response.body();
+                    if(user == null)
+                        return;
+                    User localUser = databaseHelper.getUser(user.user_id);
+                    if(localUser==null ){
+                        databaseHelper.addUser(user.user_id,user.username,user.password,user.signatrue,user.image_url,user.version);
+                        downloadImg(user.user_id);
+                        localUser = databaseHelper.getUser(user.user_id);
+                    }
+                    Log.d("API","Response: " + response.body().toString());
+                }
+                else{
+                    Log.d("API","Error: " + response.errorBody().toString());
+                }
+            }
+            @Override
+            public void onFailure(Call<User> call, Throwable t) {
+                // 请求失败，处理错误
+                Log.d("API","Failure: " + t.getMessage());
+            }
+        });
+    }
+    public void downloadImg(int user_id){
+        Call<ResponseBody> call = api.downloadImage(user_id);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    File storageDir;
+                    File file;
+                    Uri fileuri=null;
+                    try {
+                        storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                        String name = "avator_"+user_id+"_"+System.currentTimeMillis();
+                        file = File.createTempFile(
+                                name,  /* 前缀 */
+                                ".jpg",         /* 后缀 */
+                                storageDir      /* 目录 */
+                        );
+                        try (InputStream inputStream = response.body().byteStream();
+                             OutputStream outputStream = new FileOutputStream(file)) {
+                            byte[] fileReader = new byte[4096];
+                            int bytesRead;
+                            while ((bytesRead = inputStream.read(fileReader)) != -1) {
+                                outputStream.write(fileReader, 0, bytesRead);
+                            }
+                            outputStream.flush();
+                            String authority = context.getPackageName() + ".fileProvider";
+                            fileuri = FileProvider.getUriForFile(context, authority, file);
+                            Log.d("writeResponseBodyToDisk", "File written to: " + fileuri);
+                        } catch (IOException e) {
+                            Log.e("writeResponseBodyToDisk", "Failed to write file to disk", e);
+                        }
+                    }catch (IOException e){
+                        Log.d("uploadManager", "IOException:"+e);
+                        return;
+                    }
+                    databaseHelper.updateUserImage(user_id,fileuri.toString());
+                    Log.d("uploadManager", "File download was successful:"+fileuri);
+                } else {
+                    Log.d("uploadManager", "Server contact failed");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("uploadManager", "Error downloading file: " + t.getMessage());
+            }
+        });
+    }
 }

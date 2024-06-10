@@ -12,6 +12,7 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText usernameEditText, passwordEditText;
     private Button registerButton;
     private DatabaseHelper databaseHelper;
+    private UploadManager uploadManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +23,7 @@ public class RegisterActivity extends AppCompatActivity {
         passwordEditText = findViewById(R.id.registerPassword);
         registerButton = findViewById(R.id.registerConfirmButton);
         databaseHelper = new DatabaseHelper(this);
+        uploadManager = new UploadManager(this);
 
         registerButton.setOnClickListener(v -> {
             String username = usernameEditText.getText().toString().trim();
@@ -32,7 +34,8 @@ public class RegisterActivity extends AppCompatActivity {
             } else if (databaseHelper.isUsernameExists(username)) {
                 showUsernameExistsDialog();
             } else {
-                databaseHelper.addUser(username, password);
+                int user_id = databaseHelper.addUser(username, password);
+                uploadManager.upload_user(user_id);
                 Toast.makeText(RegisterActivity.this, "User registered successfully", Toast.LENGTH_SHORT).show();
                 // 打印所有用户信息
                 databaseHelper.printAllUsers();

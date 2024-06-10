@@ -54,4 +54,24 @@ public interface APIEndPoint {
     Call<ResponseBody> deleteNote(@Path("note_id") long note_id);
     @POST("notes/delete_content/{content_id}/")
     Call<ResponseBody> deleteContent(@Path("content_id") long content_id);
+
+    @Multipart
+    @POST("user/upload_user/")
+    Call<ResponseBody> uploadUser(
+            @Part("user_id") RequestBody userId,
+            @Part("password") RequestBody password,
+            @Part("username") RequestBody username,
+            @Part("signatrue") RequestBody signatrue,
+            @Part("image_url") RequestBody image_url,
+            @Part("version") RequestBody version,
+            @Part MultipartBody.Part file
+    );
+
+    @GET("user/download_file/{user_id}/")
+    Call<ResponseBody> downloadImage(@Path("user_id") long user_id);
+
+    @GET("user/get_user_by_name/{name}/")
+    Call<User> get_user_by_name(@Path("name") String name);
+
+
 }

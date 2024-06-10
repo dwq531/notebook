@@ -48,11 +48,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_USERS_TABLE = "CREATE TABLE " + TABLE_USER + "("
-                + COLUMN_USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + COLUMN_USER_ID + " INTEGER PRIMARY KEY ,"
                 + COLUMN_USERNAME + " TEXT,"
                 + COLUMN_PASSWORD + " TEXT,"
                 + COLUMN_SIGNATURE + " TEXT,"
-                + COLUMN_IMAGE_URL + " TEXT" + ")";
+                + COLUMN_IMAGE_URL + " TEXT,"
+                + COLUMN_VERSION + " INTEGER" + ")";
         db.execSQL(CREATE_USERS_TABLE);
         // 笔记列表：用户id，笔记id，笔记题目，创建时间
         String CREATE_NOTE_TABLE = String.format("CREATE TABLE %s (%s INTEGER, %s INTEGER PRIMARY KEY, %s TEXT,%s TEXT,%s INTEGER)",
@@ -72,13 +73,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    public void addUser(String username, String password) {
+    public int addUser(String username, String password) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_USERNAME, username);
         values.put(COLUMN_PASSWORD, password);
         // values.put(COLUMN_IMAGE_URL, "");
         values.put(COLUMN_SIGNATURE, "快来填写个性签名吧");
+        values.put(COLUMN_VERSION,System.currentTimeMillis());
+        long row = db.insert(TABLE_USER, null, values);
+        db.close();
+        return (int)row;
+    }
+    public void addUser(int user_id ,String username, String password,String signature,String image_uri,long version) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_USER_ID,user_id);
+        values.put(COLUMN_USERNAME, username);
+        values.put(COLUMN_PASSWORD, password);
+        values.put(COLUMN_IMAGE_URL, image_uri);
+        values.put(COLUMN_SIGNATURE,signature);
+        values.put(COLUMN_SIGNATURE, "快来填写个性签名吧");
+        values.put(COLUMN_VERSION,version);
         db.insert(TABLE_USER, null, values);
         db.close();
     }
@@ -107,6 +123,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public int getCurrentUserId() {
         return sharedPreferences.getInt(KEY_CURRENT_USER_ID, -1);
+    }
+    public User getUser(int user_id){
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_USER,null,COLUMN_USER_ID+"= ?",new String[]{String.valueOf(user_id)},null,null,null);
+        User user = null;
+        if(cursor.moveToFirst()){
+            user = new User();
+            user.user_id = user_id;
+            user.username = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USERNAME));
+            user.password = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PASSWORD));
+            user.signatrue = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SIGNATURE));
+            user.image_url = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URL));
+            user.version = Long.parseLong(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_VERSION)));
+        }
+        cursor.close();
+        db.close();
+        return user;
     }
 
     public String getCurrentUsername() {
@@ -213,6 +246,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (signature != null) {
             values.put(COLUMN_SIGNATURE, signature);
         }
+        values.put(COLUMN_VERSION,System.currentTimeMillis());
 
         db.update(TABLE_USER, values, COLUMN_USER_ID + " = ?", new String[]{String.valueOf(currentUserId)});
         db.close();
@@ -227,7 +261,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (imageUrl != null) {
             values.put(COLUMN_IMAGE_URL, imageUrl);
         }
+        values.put(COLUMN_VERSION,System.currentTimeMillis());
         db.update(TABLE_USER, values, COLUMN_USER_ID + " = ?", new String[]{String.valueOf(currentUserId)});
+        db.close();
+    }
+    public void updateUserImage(int user_id,String imageUrl) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        if (imageUrl != null) {
+            values.put(COLUMN_IMAGE_URL, imageUrl);
+        }
+        values.put(COLUMN_VERSION,System.currentTimeMillis());
+        db.update(TABLE_USER, values, COLUMN_USER_ID + " = ?", new String[]{String.valueOf(user_id)});
         db.close();
     }
 

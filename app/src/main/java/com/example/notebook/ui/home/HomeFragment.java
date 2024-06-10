@@ -22,6 +22,7 @@ import com.bumptech.glide.Glide;
 import com.example.notebook.DatabaseHelper;
 import com.example.notebook.MainActivity;
 import com.example.notebook.R;
+import com.example.notebook.UploadManager;
 
 public class HomeFragment extends Fragment {
 
@@ -35,6 +36,7 @@ public class HomeFragment extends Fragment {
 
     private AlertDialog dialog; // 用于保存对话框的引用
     private int user_id;
+    private UploadManager uploadManager;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -47,6 +49,7 @@ public class HomeFragment extends Fragment {
         updateProfileButton = root.findViewById(R.id.updateProfileButton);
         logoutButton = root.findViewById(R.id.logoutButton);
         databaseHelper = new DatabaseHelper(getActivity());
+        uploadManager = new UploadManager(getActivity());
 
         // 加载当前用户信息
         loadUserInfo();
@@ -143,7 +146,7 @@ public class HomeFragment extends Fragment {
             // 更新数据库中的用户信息
             String newImageUrl = selectedImageUri != null ? selectedImageUri.toString() : imageUrl;
             databaseHelper.updateUserInfo(newUsername, newPassword, newSignature);
-
+            uploadManager.upload_user(user_id);
             // 重新加载用户信息
             loadUserInfo();
 
@@ -178,6 +181,7 @@ public class HomeFragment extends Fragment {
                     Glide.with(this).load(selectedImageUri).into(dialogProfileImage);
                     //dialogProfileImage.setImageURI(selectedImageUri);
                     databaseHelper.updateUserImage(selectedImageUri.toString());
+                    uploadManager.upload_user(user_id);
                 }
             }
         }

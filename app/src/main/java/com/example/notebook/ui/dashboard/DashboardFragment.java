@@ -49,7 +49,7 @@ public class DashboardFragment extends Fragment {
     private ContentAdapter adapter;
     private DatabaseHelper databaseHelper;
     private UploadManager uploadManager;
-    private int user_id = 0;//todo:user
+    private int user_id = 0;
     private final static int NOTEID =2;
     private final int ADD_NOTE = 0,EDIT_NOTE=1;
     private APIEndPoint api;
