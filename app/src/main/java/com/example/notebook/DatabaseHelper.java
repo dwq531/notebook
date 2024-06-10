@@ -232,8 +232,26 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public int getNoteCount() {
-        return 0; // 实现获取笔记数量的逻辑
+        int currentUserId = getCurrentUserId();
+        if (currentUserId == -1) {
+            return 0; // 如果没有当前用户，返回 0
+        }
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT COUNT(*) FROM " + NOTE_TABLE_NAME + " WHERE " + COLUMN_USER_ID + "=?";
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(currentUserId)});
+
+        int count = 0;
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0); // 获取查询结果的第一个值，即计数值
+        }
+
+        cursor.close();
+        db.close();
+
+        return count;
     }
+
 
     public void logoutCurrentUser() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -472,6 +490,37 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COLUMN_NOTE_ID + "= ?",
                 new String[] {String.valueOf(note_id)});
         db.close();
+    }
+
+    public List<Note> searchNotes(String keyword) {
+        List<Note> notes = new ArrayList<>();
+        int currentUserId = getCurrentUserId();
+        if (currentUserId == -1) {
+            Log.d("searchNotes","currentUserId=-1");
+            return notes; // 如果没有当前用户，返回空列表
+        }
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + NOTE_TABLE_NAME + " WHERE " + COLUMN_USER_ID + "=? AND ("
+                + COLUMN_TITLE + " LIKE ? OR " + COLUMN_NOTE_ID + " IN ("
+                + "SELECT " + COLUMN_NOTE_ID + " FROM " + CONTENT_TABLE_NAME + " WHERE " + COLUMN_CONTENT + " LIKE ?))";
+        String keywordPattern = "%" + keyword + "%";
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(currentUserId), keywordPattern, keywordPattern});
+
+        while (cursor.moveToNext()) {
+            Note note = new Note();
+            note.note_id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            note.title = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TITLE));
+            note.create_time = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATE_TIME));
+            note.user_id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_USER_ID));
+            note.version = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_VERSION));
+            Log.d("searchNotes", note.toString());
+            notes.add(note);
+        }
+
+        cursor.close();
+        db.close();
+        return notes;
     }
 
 }

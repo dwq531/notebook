@@ -23,6 +23,7 @@ import com.example.notebook.ContentAdapter;
 import com.example.notebook.DatabaseHelper;
 import com.example.notebook.Note;
 import com.example.notebook.R;
+import com.example.notebook.SearchActivity;
 import com.example.notebook.UploadManager;
 import com.example.notebook.databinding.FragmentDashboardBinding;
 import com.example.notebook.text_editor;
@@ -88,6 +89,17 @@ public class DashboardFragment extends Fragment {
                 startActivityForResult(intent,ADD_NOTE);
             }
         });
+
+        searchButton = root.findViewById(R.id.but_search);
+        searchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), SearchActivity.class);
+                startActivity(intent);
+            }
+        });
+
+
         updateNotes();
         return root;
     }

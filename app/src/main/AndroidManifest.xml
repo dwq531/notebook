@@ -32,6 +32,7 @@
         <activity
             android:name=".text_editor"
             android:exported="false" />
+        <activity android:name=".SearchActivity"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
