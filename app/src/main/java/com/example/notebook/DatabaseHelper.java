@@ -24,9 +24,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "users.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
-    private static final String TABLE_USER = "users",NOTE_TABLE_NAME="notes",CONTENT_TABLE_NAME="content";
+    private static final String TABLE_USER = "users",NOTE_TABLE_NAME="notes",CONTENT_TABLE_NAME="content",FOLDER_TABLE_NAME = "folders", FOLDER_NOTE_TABLE_NAME = "folder_notes";
     private static final String COLUMN_USER_ID = "id";
     private static final String COLUMN_USERNAME = "username";
     private static final String COLUMN_PASSWORD = "password";
@@ -41,6 +41,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_NOTE_ID="note_id",COLUMN_TITLE="title",COLUMN_CREATE_TIME="create_time",COLUMN_VERSION="version";
     // 笔记内容：所属笔记id，内容id，内容，类型，位置
     private static final String COLUMN_CONTENT_ID="content_id",COLUMN_CONTENT="content",COLUMN_TYPE="type",COLUMN_POSITION="position";
+    // 文件夹：文件夹id，用户id，文件夹名称
+    private static final String COLUMN_FOLDER_ID = "folder_id", COLUMN_FOLDER_NAME = "folder_name";
+    // 文件夹和笔记关系表
+    private static final String COLUMN_FOLDER_NOTE_ID = "folder_note_id";
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -63,13 +67,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String CREATE_CONTENT_TABLE = String.format("CREATE TABLE %s (%s INTEGER,%s INTEGER PRIMARY KEY, %s TEXT,%s INTEGER,%s INTEGER,%s INTEGER)",
                 CONTENT_TABLE_NAME,COLUMN_NOTE_ID,COLUMN_CONTENT_ID,COLUMN_CONTENT,COLUMN_TYPE,COLUMN_POSITION,COLUMN_VERSION);
         db.execSQL(CREATE_CONTENT_TABLE);
+        String CREATE_FOLDER_TABLE = String.format("CREATE TABLE %s (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s TEXT)",
+                FOLDER_TABLE_NAME, COLUMN_FOLDER_ID, COLUMN_USER_ID, COLUMN_FOLDER_NAME);
+        db.execSQL(CREATE_FOLDER_TABLE);
 
+        String CREATE_FOLDER_NOTE_TABLE = String.format("CREATE TABLE %s (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s INTEGER)",
+                FOLDER_NOTE_TABLE_NAME, COLUMN_FOLDER_NOTE_ID, COLUMN_FOLDER_ID, COLUMN_NOTE_ID);
+        db.execSQL(CREATE_FOLDER_NOTE_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 3) {
-            db.execSQL("ALTER TABLE " + TABLE_USER + " ADD COLUMN " + COLUMN_IMAGE_URL + " TEXT");
+        if (oldVersion < 4) {
+            String CREATE_FOLDER_TABLE = String.format("CREATE TABLE %s (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s TEXT)",
+                    FOLDER_TABLE_NAME, COLUMN_FOLDER_ID, COLUMN_USER_ID, COLUMN_FOLDER_NAME);
+            db.execSQL(CREATE_FOLDER_TABLE);
+
+            String CREATE_FOLDER_NOTE_TABLE = String.format("CREATE TABLE %s (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s INTEGER)",
+                    FOLDER_NOTE_TABLE_NAME, COLUMN_FOLDER_NOTE_ID, COLUMN_FOLDER_ID, COLUMN_NOTE_ID);
+            db.execSQL(CREATE_FOLDER_NOTE_TABLE);
         }
     }
 
@@ -611,5 +627,61 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         return notes;
+    }
+
+    public long addFolder(String folderName) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_USER_ID, getCurrentUserId());
+        values.put(COLUMN_FOLDER_NAME, folderName);
+        long row = db.insert(FOLDER_TABLE_NAME, null, values);
+        db.close();
+        return row;
+    }
+
+    public List<String> getAllFolders() {
+        List<String> folders = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {COLUMN_FOLDER_NAME};
+        String selection = COLUMN_USER_ID + "=?";
+        String[] selectionArgs = {String.valueOf(getCurrentUserId())};
+        Cursor cursor = db.query(FOLDER_TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            String folderName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER_NAME));
+            folders.add(folderName);
+        }
+
+        cursor.close();
+        db.close();
+        return folders;
+    }
+
+    public long addNoteToFolder(long noteId, long folderId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_FOLDER_ID, folderId);
+        values.put(COLUMN_NOTE_ID, noteId);
+        long row = db.insert(FOLDER_NOTE_TABLE_NAME, null, values);
+        db.close();
+        return row;
+    }
+
+    public List<Long> getNotesInFolder(long folderId) {
+        List<Long> noteIds = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {COLUMN_NOTE_ID};
+        String selection = COLUMN_FOLDER_ID + "=?";
+        String[] selectionArgs = {String.valueOf(folderId)};
+        Cursor cursor = db.query(FOLDER_NOTE_TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            long noteId = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            noteIds.add(noteId);
+        }
+
+        cursor.close();
+        db.close();
+        return noteIds;
     }
 }

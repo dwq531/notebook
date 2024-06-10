@@ -8,6 +8,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import android.app.Dialog;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -50,6 +51,7 @@ import java.util.Locale;
 
 public class text_editor extends AppCompatActivity {
     Button addImgButton,addAudioButton,addTextButton,returnButton;
+    Button folderButton;
     LinearLayout linearLayout;
     public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION=5;
     private static int TEXT=0,IMAGE=1,AUDIO=2;
@@ -105,6 +107,7 @@ public class text_editor extends AppCompatActivity {
         addAudioButton = findViewById(R.id.but_add_audio);
         addTextButton = findViewById(R.id.but_add_text);
         returnButton = findViewById(R.id.but_back);
+        folderButton = findViewById(R.id.but_folder);
         linearLayout = findViewById(R.id.linear_layout);
         // 绑定按钮点击事件
         addImgButton.setOnClickListener(new View.OnClickListener() {
@@ -223,7 +226,12 @@ public class text_editor extends AppCompatActivity {
                 finish();
             }
         });
-
+        folderButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showFolderDialog();
+            }
+        });
         // 获取笔记内容
         Intent intent = getIntent();
         note_id = intent.getLongExtra("note_id",-1);
@@ -647,4 +655,11 @@ public class text_editor extends AppCompatActivity {
             mediaRecorder = null;
         }
     }
+
+    private void showFolderDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_folder_selection);
+        dialog.show();
+    }
+
 }
