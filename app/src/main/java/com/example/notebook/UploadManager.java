@@ -421,7 +421,6 @@ public class UploadManager {
                     if(localUser==null ){
                         databaseHelper.addUser(user.user_id,user.username,user.password,user.signatrue,user.image_url,user.version);
                         downloadImg(user.user_id);
-                        localUser = databaseHelper.getUser(user.user_id);
                     }
                     Log.d("API","Response: " + response.body().toString());
                 }

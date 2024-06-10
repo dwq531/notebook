@@ -12,10 +12,19 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.notebook.databinding.ActivityMainBinding;
 
+import android.util.Log;
 import android.widget.Button;
 import android.content.Intent;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import java.util.concurrent.CountDownLatch;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -48,17 +57,58 @@ public class MainActivity extends AppCompatActivity {
             if (username.isEmpty() || password.isEmpty()) {
                 Toast.makeText(MainActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             } else {
-                uploadManager.get_user(username);
-                if (databaseHelper.checkUser(username, password)) {
-                    Toast.makeText(MainActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
-                    // 登录成功后跳转到主页
-                    Intent intent = new Intent(MainActivity.this, HomepageActivity.class);
-                    startActivity(intent);
-                    finish();
+                // 查询云端服务器的用户信息
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl("http://10.0.2.2:8000/")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build();
+                APIEndPoint api = retrofit.create(APIEndPoint.class);
+                Call<User> call = api.get_user_by_name(username);
+                call.enqueue(new Callback<User>() {
+                    @Override
+                    public void onResponse(Call<User> call, Response<User> response) {
+                        if (response.isSuccessful()) {
+                            User user = response.body();
+                            if(user == null) {
+                                Toast.makeText(MainActivity.this, "Invalid username or password", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            User localUser = databaseHelper.getUser(user.user_id);
+                            if(localUser==null ){
+                                databaseHelper.addUser(user.user_id,user.username,user.password,user.signatrue,user.image_url,user.version);
+                                uploadManager.downloadImg(user.user_id);
+                            } else if (localUser.version<user.version) {
+                                databaseHelper.updateUserInfo(user.username,user.password,user.signatrue);
+                                uploadManager.downloadImg(user.user_id);
+                            }
+                            if (databaseHelper.checkUser(username, password)) {
+                                Toast.makeText(MainActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
+                                // 登录成功后跳转到主页
+                                Intent intent = new Intent(MainActivity.this, HomepageActivity.class);
+                                startActivity(intent);
+                                finish();
 
-                } else {
-                    Toast.makeText(MainActivity.this, "Invalid username or password", Toast.LENGTH_SHORT).show();
-                }
+                            }
+                            Log.d("API","Response: " + response.body().toString());
+                        }
+                        else{
+                            Log.d("API","Error: " + response.errorBody().toString());
+                        }
+                    }
+                    @Override
+                    public void onFailure(Call<User> call, Throwable t) {
+                        Log.d("API","Failure: " + t.getMessage());
+                        if (databaseHelper.checkUser(username, password)) {
+                            Toast.makeText(MainActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
+                            // 登录成功后跳转到主页
+                            Intent intent = new Intent(MainActivity.this, HomepageActivity.class);
+                            startActivity(intent);
+                            finish();
+
+                        }
+                    }
+                });
+
             }
         });
 
