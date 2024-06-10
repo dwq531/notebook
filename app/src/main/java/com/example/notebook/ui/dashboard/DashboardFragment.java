@@ -71,7 +71,7 @@ public class DashboardFragment extends Fragment {
         user_id = databaseHelper.getCurrentUserId();;
         recyclerView = root.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(root.getContext()));
-        adapter = new ContentAdapter(getActivity(),0);
+        adapter = new ContentAdapter(getActivity(),0,null);
         recyclerView.setAdapter(adapter);
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override

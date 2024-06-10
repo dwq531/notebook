@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -105,7 +106,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return isValidUser;
     }
 
-    private int getCurrentUserId() {
+    public int getCurrentUserId() {
         return sharedPreferences.getInt(KEY_CURRENT_USER_ID, -1);
     }
 
@@ -231,16 +232,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    public int getNoteCount() {
+    /*public int getNoteCount() {
         int currentUserId = getCurrentUserId();
         if (currentUserId == -1) {
             return 0; // 如果没有当前用户，返回 0
         }
-
+        Log.d("getNoteCount","currentUserId:"+currentUserId);
         List<Note> userNotes = getNoteList(currentUserId);
-        Log.d("searchNotes", "Number of user notes: " + userNotes.size());
+        Log.d("getNoteCount", "Number of user notes: " + userNotes.size());
         return userNotes.size();
-    }
+    }*/
 
 
     public void logoutCurrentUser() {
@@ -604,6 +605,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 if (content.content.contains(keyword) || note.title.contains(keyword)) {
                     notes.add(note);
                     Log.d("searchNotes", "Match found for keyword: " + keyword);
+                    break;
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.example.notebook;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -47,7 +49,7 @@ public class SearchActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         databaseHelper = new DatabaseHelper(this);
-        adapter = new ContentAdapter(this, 0);
+        adapter = new ContentAdapter(this, 0,null);
         recyclerView.setAdapter(adapter);
 
         searchButton.setOnClickListener(new View.OnClickListener() {
@@ -61,19 +63,15 @@ public class SearchActivity extends AppCompatActivity {
 
     private void searchNotes(String query) {
         List<Note> notes = databaseHelper.searchNotes(query);
-        // adapter.clearItems();
+        // 如果没有匹配到任何内容，则显示 toast 弹窗
+        if (notes.isEmpty()) {
+            Toast Toast = null;
+            Toast.makeText(SearchActivity.this, "未搜索到相关内容", Toast.LENGTH_SHORT).show();
+        }
+        adapter.clearItems();
         for (Note note : notes) {
             adapter.addItem(note.title, note.create_time, note.note_id);
+            adapter.keyword = query;
         }
-    }
-
-    private Spannable highlightText(String text, String query) {
-        Spannable spannable = new SpannableString(text);
-        int start = text.toLowerCase().indexOf(query.toLowerCase());
-        if (start >= 0) {
-            int end = start + query.length();
-            spannable.setSpan(new BackgroundColorSpan(Color.YELLOW), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        return spannable;
     }
 }

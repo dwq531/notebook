@@ -7,6 +7,11 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.BackgroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,10 +33,17 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
     private Activity activity;
     private int user_id = 0;
     private final int EDIT_NOTE=1;
+    public String keyword; // 新增关键词变量
 
-    public ContentAdapter(Activity a,int user){
+    public ContentAdapter(Activity a,int user,String keyword){
         this.activity = a;
         this.user_id = user;
+        this.keyword = keyword; // 存储关键词
+    }
+
+    public void clearItems() {
+        noteblocks.clear();
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -45,6 +57,7 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
             button = v.findViewById(R.id.delete_button);
         }
     }
+
     public class Noteblock{
         public String title,time;
         public long note_id;
@@ -63,8 +76,17 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ContentAdapter.ViewHolder holder, int position) {
+
+
         Noteblock note = noteblocks.get(position);
-        holder.title.setText(note.title);
+        // 设置笔记标题并高亮显示关键词
+        if (note.title != null && keyword != null) {
+            Log.d("keyword",keyword);
+            Spannable highlightedTitle = highlightText(note.title);
+            holder.title.setText(highlightedTitle);
+        } else {
+            holder.title.setText(note.title); // 如果参数为空，不进行高亮处理
+        }
         holder.time.setText(note.time);
         holder.itemView.setTag(note.note_id);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -124,6 +146,15 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
                 break;
             }
         }
+    }
+    private Spannable highlightText(String text) {
+        Spannable spannable = new SpannableString(text);
+        int start = text.toLowerCase().indexOf(keyword.toLowerCase());
+        if (start >= 0) {
+            int end = start + keyword.length();
+            spannable.setSpan(new BackgroundColorSpan(Color.YELLOW), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return spannable;
     }
 
 
