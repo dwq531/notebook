@@ -40,7 +40,8 @@ public class HomepageActivity extends AppCompatActivity {
     private int user_id = 0;
     private final int ADD_NOTE = 0,EDIT_NOTE=1;
     private UploadManager uploadManager;
-    private  static int REQUEST_READ_EXTERNAL_STORAGE=0;
+    private DatabaseHelper databaseHelper;
+    private  static int REQUEST_READ_MEDIA_IMAGES=0,REQUEST_READ_MEDIA_AUDIO=1;
     private NavController navController;
     private NavHostFragment navHostFragment;
     @Override
@@ -65,11 +66,14 @@ public class HomepageActivity extends AppCompatActivity {
                 .build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_READ_EXTERNAL_STORAGE);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_IMAGES}, REQUEST_READ_MEDIA_IMAGES);
         }
-
-
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_AUDIO}, REQUEST_READ_MEDIA_AUDIO);
+        }
+        databaseHelper = new DatabaseHelper(this);
+        user_id = databaseHelper.getCurrentUserId();
         uploadManager = new UploadManager(this);
         uploadManager.getNotes(user_id);
     }
@@ -77,12 +81,20 @@ public class HomepageActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_READ_EXTERNAL_STORAGE) {
+        if (requestCode == REQUEST_READ_MEDIA_IMAGES) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, proceed with your action
+                Toast.makeText(this, "Read media images permission granted.", Toast.LENGTH_LONG).show();
             } else {
                 // Permission denied, inform the user that the permission is necessary
-                Toast.makeText(this, "Read external storage permission is required to access files.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Read media images permission is required to access files.", Toast.LENGTH_LONG).show();
+            }
+        }
+        else if (requestCode == REQUEST_READ_MEDIA_AUDIO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Read media audio permission granted.", Toast.LENGTH_LONG).show();
+            } else {
+                // Permission denied, inform the user that the permission is necessary
+                Toast.makeText(this, "Read media audio permission is required to access files.", Toast.LENGTH_LONG).show();
             }
         }
     }

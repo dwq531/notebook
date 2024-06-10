@@ -18,6 +18,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
 import com.example.notebook.DatabaseHelper;
 import com.example.notebook.MainActivity;
 import com.example.notebook.R;
@@ -33,6 +34,7 @@ public class HomeFragment extends Fragment {
     private Uri selectedImageUri; // 用于存储选择的新头像 URI
 
     private AlertDialog dialog; // 用于保存对话框的引用
+    private int user_id;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -53,7 +55,8 @@ public class HomeFragment extends Fragment {
         logoutButton.setOnClickListener(v -> logout());
 
         // 统计笔记数量
-        int noteCount = databaseHelper.getNoteCount();
+        user_id = databaseHelper.getCurrentUserId();
+        int noteCount = databaseHelper.getNoteList(user_id).size();
         noteCountText.setText("笔记数量: " + noteCount);
 
         return root;
@@ -81,9 +84,11 @@ public class HomeFragment extends Fragment {
         // 加载并设置个人头像
         String imageUrl = databaseHelper.getCurrentUserImageUrl();
         if (imageUrl != null) {
-            profileImage.setImageURI(Uri.parse(imageUrl));
+            Glide.with(this).load(imageUrl).into(profileImage);
+            //profileImage.setImageURI(Uri.parse(imageUrl));
         } else {
-            profileImage.setImageResource(R.drawable.default_profileimage); // 设置默认头像
+            Glide.with(this).load(R.drawable.default_profileimage).into(profileImage);
+            //profileImage.setImageResource(R.drawable.default_profileimage); // 设置默认头像
         }
     }
 
@@ -115,9 +120,11 @@ public class HomeFragment extends Fragment {
         // 设置当前用户头像
         String imageUrl = databaseHelper.getCurrentUserImageUrl();
         if (imageUrl != null) {
-            dialogProfileImage.setImageURI(Uri.parse(imageUrl));
+            Glide.with(this).load(imageUrl).into(dialogProfileImage);
+            //dialogProfileImage.setImageURI(Uri.parse(imageUrl));
         } else {
-            dialogProfileImage.setImageResource(R.drawable.default_profileimage); // 设置默认头像
+            Glide.with(this).load(R.drawable.default_profileimage).into(dialogProfileImage);
+            //dialogProfileImage.setImageResource(R.drawable.default_profileimage); // 设置默认头像
         }
 
         // 选择新头像的点击事件
@@ -168,7 +175,8 @@ public class HomeFragment extends Fragment {
                 // 在对话框中显示新选择的头像
                 ImageView dialogProfileImage = dialog.findViewById(R.id.editProfileImage);
                 if (dialogProfileImage != null) {
-                    dialogProfileImage.setImageURI(selectedImageUri);
+                    Glide.with(this).load(selectedImageUri).into(dialogProfileImage);
+                    //dialogProfileImage.setImageURI(selectedImageUri);
                     databaseHelper.updateUserImage(selectedImageUri.toString());
                 }
             }
