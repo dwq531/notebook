@@ -11,10 +11,12 @@ import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface APIEndPoint {
     @GET("notes/get_notes/{user_id}/")
@@ -72,6 +74,10 @@ public interface APIEndPoint {
 
     @GET("user/get_user_by_name/{name}/")
     Call<User> get_user_by_name(@Path("name") String name);
-
-
+    @POST("oauth/2.0/token")
+    Call<ResponseBody> get_access_token(@Query("grant_type") String grantType,
+                                        @Query("client_id") String clientId,
+                                        @Query("client_secret") String clientSecret);
+    @POST("rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions")
+    Call<ResponseBody> ask_AI(@Header("Content-Type") String contentType, @Query("access_token") String access_token, @Body RequestBody request);
 }

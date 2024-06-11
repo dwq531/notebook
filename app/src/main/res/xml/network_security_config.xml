@@ -4,5 +4,6 @@
         <domain includeSubdomains="true">127.0.0.1</domain>
         <domain includeSubdomains="true">10.0.2.2</domain>
         <domain includeSubdomains="true">183.172.155.18</domain>
+        <domain includeSubdomains="true">developer.baidu.com</domain>
     </domain-config>
 </network-security-config>

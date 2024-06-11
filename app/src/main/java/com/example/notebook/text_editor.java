@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class text_editor extends AppCompatActivity {
-    Button addImgButton,addAudioButton,addTextButton,returnButton;
+    Button addImgButton,addAudioButton,addTextButton,returnButton,AIButton;
     LinearLayout linearLayout;
     public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION=5,REQUEST_READ_MEDIA_AUDIO=6;
     private static int TEXT=0,IMAGE=1,AUDIO=2;
@@ -105,6 +105,7 @@ public class text_editor extends AppCompatActivity {
         addImgButton = findViewById(R.id.but_add_img);
         addAudioButton = findViewById(R.id.but_add_audio);
         addTextButton = findViewById(R.id.but_add_text);
+        AIButton = findViewById(R.id.but_ai);
         returnButton = findViewById(R.id.but_back);
         linearLayout = findViewById(R.id.linear_layout);
         // 绑定按钮点击事件
@@ -229,6 +230,60 @@ public class text_editor extends AppCompatActivity {
             }
         });
 
+        AIButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PopupMenu popupMenu = new PopupMenu(text_editor.this, AIButton);
+                popupMenu.getMenuInflater().inflate(R.menu.select_ai_menu, popupMenu.getMenu());
+                popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        if(item.getItemId()==R.id.generate_title){
+                            AI ai = new AI(text_editor.this);
+                            ai.generate_title(note_id,(String title)->{
+                                EditText editTitle = findViewById(R.id.text_title);
+                                editTitle.setText(title);
+                            });
+                            return true;
+                        }else if(item.getItemId()==R.id.generate_summary){
+                            AI ai = new AI(text_editor.this);
+                            ai.generate_summary(note_id,(String text)->{
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        View textBlock = getLayoutInflater().inflate(R.layout.text_layout, linearLayout, false);
+                                        linearLayout.addView(textBlock);
+                                        setDrag(textBlock);
+                                        long content_id = databaseHelper.addContent(note_id,text,TEXT,linearLayout.indexOfChild(textBlock));
+                                        textBlock.setTag(content_id);
+                                        EditText editText = textBlock.findViewById(R.id.text_content);
+                                        editText.setText(text);
+                                        editText.addTextChangedListener(new TextWatcher() {
+                                            @Override
+                                            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                                            @Override
+                                            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                                            @Override
+                                            public void afterTextChanged(Editable s) {
+                                                Log.d("text_editor",s.toString());
+                                                databaseHelper.updateContent(content_id, s.toString());
+                                                databaseHelper.updateNoteVersion(note_id);
+                                            }
+                                        });
+                                    }
+                                });
+
+                            });
+                            return true;
+                        }
+                        else{
+                            return false;
+                        }
+                    }
+                });
+                popupMenu.show();
+            }
+        });
         // 获取笔记内容
         Intent intent = getIntent();
         note_id = intent.getLongExtra("note_id",-1);

@@ -38,7 +38,7 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginTop="20dp"
-        android:layout_marginEnd="15dp"
+        android:layout_marginEnd="5dp"
         android:backgroundTint="@android:color/transparent"
         android:drawableLeft="@drawable/audio"
         android:drawableTint="#000000"
@@ -51,11 +51,24 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginTop="20dp"
-        android:layout_marginEnd="15dp"
+        android:layout_marginEnd="5dp"
         android:backgroundTint="@android:color/transparent"
         android:drawableLeft="@drawable/text"
         android:drawableTint="#000000"
         app:layout_constraintEnd_toStartOf="@+id/but_add_audio"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="SpeakableTextPresentCheck" />
+
+    <Button
+        android:id="@+id/but_ai"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="5dp"
+        android:backgroundTint="@android:color/transparent"
+        android:drawableLeft="@drawable/ai"
+        android:drawableTint="#000000"
+        app:layout_constraintEnd_toStartOf="@+id/but_add_text"
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="SpeakableTextPresentCheck" />
 
