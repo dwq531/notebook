@@ -239,13 +239,20 @@ public class text_editor extends AppCompatActivity {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
                         if(item.getItemId()==R.id.generate_title){
+                            Toast.makeText(text_editor.this, "开始生成标题，可能需要一段时间，莫急", Toast.LENGTH_SHORT).show();
                             AI ai = new AI(text_editor.this);
                             ai.generate_title(note_id,(String title)->{
-                                EditText editTitle = findViewById(R.id.text_title);
-                                editTitle.setText(title);
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        EditText editTitle = findViewById(R.id.text_title);
+                                        editTitle.setText(title);
+                                    }
+                                });
                             });
                             return true;
                         }else if(item.getItemId()==R.id.generate_summary){
+                            Toast.makeText(text_editor.this, "开始生成总结，可能需要一段时间，莫急", Toast.LENGTH_SHORT).show();
                             AI ai = new AI(text_editor.this);
                             ai.generate_summary(note_id,(String text)->{
                                 runOnUiThread(new Runnable() {
