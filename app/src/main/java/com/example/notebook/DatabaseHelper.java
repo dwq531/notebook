@@ -68,6 +68,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String CREATE_CONTENT_TABLE = String.format("CREATE TABLE %s (%s INTEGER,%s INTEGER PRIMARY KEY, %s TEXT,%s INTEGER,%s INTEGER,%s INTEGER)",
                 CONTENT_TABLE_NAME,COLUMN_NOTE_ID,COLUMN_CONTENT_ID,COLUMN_CONTENT,COLUMN_TYPE,COLUMN_POSITION,COLUMN_VERSION);
         db.execSQL(CREATE_CONTENT_TABLE);
+
         String CREATE_FOLDER_TABLE = String.format("CREATE TABLE %s (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s TEXT)",
                 FOLDER_TABLE_NAME, COLUMN_FOLDER_ID, COLUMN_USER_ID, COLUMN_FOLDER_NAME);
         db.execSQL(CREATE_FOLDER_TABLE);
@@ -728,5 +729,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return noteIds;
+    }
+
+    // 添加获取文件夹ID的方法
+    public long getFolderIdByName(String folderName) {
+        long folderId = -1;
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {COLUMN_FOLDER_ID};
+        String selection = COLUMN_FOLDER_NAME + "=? AND " + COLUMN_USER_ID + "=?";
+        String[] selectionArgs = {folderName, String.valueOf(getCurrentUserId())};
+        Cursor cursor = db.query(FOLDER_TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+
+        if (cursor.moveToFirst()) {
+            folderId = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_FOLDER_ID));
+        }
+
+        cursor.close();
+        db.close();
+        return folderId;
     }
 }
