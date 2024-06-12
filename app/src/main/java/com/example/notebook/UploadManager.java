@@ -40,7 +40,7 @@ public class UploadManager {
 
     public UploadManager(Context context) {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://183.172.155.18:8000/")
+                .baseUrl("http://183.173.97.190:8000/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 

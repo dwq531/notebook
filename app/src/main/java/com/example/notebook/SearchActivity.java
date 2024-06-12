@@ -43,6 +43,9 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivitySearchBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
 
         searchInput = findViewById(R.id.search_input);
         searchButton = findViewById(R.id.search_button);

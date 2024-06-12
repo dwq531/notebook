@@ -53,16 +53,10 @@ public class DashboardFragment extends Fragment {
     private int user_id = 0;
     private final static int NOTEID =2;
     private final int ADD_NOTE = 0,EDIT_NOTE=1;
-    private APIEndPoint api;
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         DashboardViewModel dashboardViewModel =
                 new ViewModelProvider(this).get(DashboardViewModel.class);
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:8000/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        api = retrofit.create(APIEndPoint.class);
         uploadManager = new UploadManager(getContext());
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();

@@ -40,6 +40,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +52,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class text_editor extends AppCompatActivity {
-    Button addImgButton,addAudioButton,addTextButton,returnButton,AIButton;
+    Button addImgButton,addAudioButton,addTextButton,returnButton;
+    FloatingActionButton AIButton;
     Button folderButton;
     LinearLayout linearLayout;
     public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION=5,REQUEST_READ_MEDIA_AUDIO=6;
