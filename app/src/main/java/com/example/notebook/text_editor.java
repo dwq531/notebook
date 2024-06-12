@@ -7,13 +7,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ClipData;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
@@ -24,8 +20,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.Editable;
-import android.text.InputType;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.DragEvent;
@@ -39,7 +33,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -60,9 +53,10 @@ import java.util.Locale;
 
 public class text_editor extends AppCompatActivity {
     Button addImgButton,addAudioButton,addTextButton,returnButton;
+    FloatingActionButton AIButton;
     Button folderButton;
     LinearLayout linearLayout;
-    public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION=5;
+    public static int PICK_IMAGE_REQUEST = 1,TAKE_PICTURE_REQUEST = 2,PICK_AUDIO_REQUEST = 3,RECORD_PERMISSION=4,CAMERA_PERMISSION=5,REQUEST_READ_MEDIA_AUDIO=6;
     private static int TEXT=0,IMAGE=1,AUDIO=2;
     private MediaPlayer mediaPlayer=null;
     private View playingAudioBlock = null;
@@ -115,6 +109,7 @@ public class text_editor extends AppCompatActivity {
         addImgButton = findViewById(R.id.but_add_img);
         addAudioButton = findViewById(R.id.but_add_audio);
         addTextButton = findViewById(R.id.but_add_text);
+        AIButton = findViewById(R.id.but_ai);
         returnButton = findViewById(R.id.but_back);
         folderButton = findViewById(R.id.but_folder);
         linearLayout = findViewById(R.id.linear_layout);
@@ -743,81 +738,7 @@ public class text_editor extends AppCompatActivity {
     private void showFolderDialog() {
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_folder_selection);
-
-        // 使用 dialog.findViewById 获取对话框中的视图引用
-        RecyclerView folderRecyclerView = dialog.findViewById(R.id.folderRecyclerView);
-        Button butNewFolder = dialog.findViewById(R.id.but_new_folder);
-        Button butArchive = dialog.findViewById(R.id.but_archive);
-        Log.d("showFolderDialog","butNewFolder");
-
-        // 获取所有文件夹列表
-        DatabaseHelper databaseHelper = new DatabaseHelper(this); // 初始化数据库帮助器
-        List<String> folders = databaseHelper.getAllFolders();
-
-        // 实例化 FolderAdapter，并为 folderRecyclerView 设置适配器
-        FolderAdapter adapter = new FolderAdapter(folders);
-        folderRecyclerView.setAdapter(adapter);
-        folderRecyclerView.setLayoutManager(new LinearLayoutManager(this)); // 设置布局管理器
-
-        dialog.show();
-
-        butNewFolder.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d("showFolderDialog","butNewFolder");
-                // 显示对话框或输入框以获取新文件夹的名称
-                AlertDialog.Builder builder = new AlertDialog.Builder(text_editor.this);
-                builder.setTitle("New Folder");
-                final EditText input = new EditText(text_editor.this);
-                input.setInputType(InputType.TYPE_CLASS_TEXT);
-                builder.setView(input);
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String folderName = input.getText().toString();
-                        if (!TextUtils.isEmpty(folderName)) {
-                            // 将新文件夹保存到数据库中
-                            long row = databaseHelper.addFolder(folderName);
-                            if (row != -1) {
-                                // 如果保存成功，刷新文件夹列表
-                                folders.add(folderName);
-                                adapter.notifyDataSetChanged();
-                            }
-                        }
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-                builder.show();
-            }
-        });
-
-        butArchive.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // 获取选定的笔记和文件夹
-                long noteId = 1; // 获取选定的笔记ID;
-                String folderName = adapter.getSelectedFolder();
-                if (folderName != null) {
-                    // 根据文件夹名称获取文件夹ID
-                    long folderId = databaseHelper.getFolderIdByName(folderName);
-                    // 将笔记归档到选定的文件夹中
-                    long row = databaseHelper.addNoteToFolder(noteId, folderId);
-                    if (row != -1) {
-                        // 如果归档成功，提示用户
-                        Toast.makeText(text_editor.this, "Note archived successfully.", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    // 如果没有选定文件夹，提示用户选择文件夹
-                    Toast.makeText(text_editor.this, "Please select a folder.", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
         dialog.show();
     }
+
 }

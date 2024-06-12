@@ -1,7 +1,6 @@
 package com.example.notebook;
 
 import android.graphics.Color;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +16,10 @@ import java.util.List;
 public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder> {
 
     private List<String> folders;
-
     private int selectedPosition = -1;
 
     public FolderAdapter(List<String> folders) {
         this.folders = folders;
-        Log.d("FoldersTest","folders="+folders);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
