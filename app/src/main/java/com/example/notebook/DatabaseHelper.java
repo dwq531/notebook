@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,9 +24,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "users.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
-    private static final String TABLE_USER = "users",NOTE_TABLE_NAME="notes",CONTENT_TABLE_NAME="content";
+    private static final String TABLE_USER = "users",NOTE_TABLE_NAME="notes",CONTENT_TABLE_NAME="content",FOLDER_TABLE_NAME = "folders", FOLDER_NOTE_TABLE_NAME = "folder_notes";
     private static final String COLUMN_USER_ID = "id";
     private static final String COLUMN_USERNAME = "username";
     private static final String COLUMN_PASSWORD = "password";
@@ -40,6 +41,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_NOTE_ID="note_id",COLUMN_TITLE="title",COLUMN_CREATE_TIME="create_time",COLUMN_VERSION="version";
     // 笔记内容：所属笔记id，内容id，内容，类型，位置
     private static final String COLUMN_CONTENT_ID="content_id",COLUMN_CONTENT="content",COLUMN_TYPE="type",COLUMN_POSITION="position";
+    // 文件夹：文件夹id，用户id，文件夹名称
+    private static final String COLUMN_FOLDER_ID = "folder_id", COLUMN_FOLDER_NAME = "folder_name";
+    // 文件夹和笔记关系表
+    private static final String COLUMN_FOLDER_NOTE_ID = "folder_note_id";
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -63,13 +68,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String CREATE_CONTENT_TABLE = String.format("CREATE TABLE %s (%s INTEGER,%s INTEGER PRIMARY KEY, %s TEXT,%s INTEGER,%s INTEGER,%s INTEGER)",
                 CONTENT_TABLE_NAME,COLUMN_NOTE_ID,COLUMN_CONTENT_ID,COLUMN_CONTENT,COLUMN_TYPE,COLUMN_POSITION,COLUMN_VERSION);
         db.execSQL(CREATE_CONTENT_TABLE);
+        String CREATE_FOLDER_TABLE = String.format("CREATE TABLE %s (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s TEXT)",
+                FOLDER_TABLE_NAME, COLUMN_FOLDER_ID, COLUMN_USER_ID, COLUMN_FOLDER_NAME);
+        db.execSQL(CREATE_FOLDER_TABLE);
 
+        String CREATE_FOLDER_NOTE_TABLE = String.format("CREATE TABLE %s (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s INTEGER)",
+                FOLDER_NOTE_TABLE_NAME, COLUMN_FOLDER_NOTE_ID, COLUMN_FOLDER_ID, COLUMN_NOTE_ID);
+        db.execSQL(CREATE_FOLDER_NOTE_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 3) {
-            db.execSQL("ALTER TABLE " + TABLE_USER + " ADD COLUMN " + COLUMN_IMAGE_URL + " TEXT");
+        if (oldVersion < 4) {
+            String CREATE_FOLDER_TABLE = String.format("CREATE TABLE %s (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s TEXT)",
+                    FOLDER_TABLE_NAME, COLUMN_FOLDER_ID, COLUMN_USER_ID, COLUMN_FOLDER_NAME);
+            db.execSQL(CREATE_FOLDER_TABLE);
+
+            String CREATE_FOLDER_NOTE_TABLE = String.format("CREATE TABLE %s (%s INTEGER PRIMARY KEY AUTOINCREMENT, %s INTEGER, %s INTEGER)",
+                    FOLDER_NOTE_TABLE_NAME, COLUMN_FOLDER_NOTE_ID, COLUMN_FOLDER_ID, COLUMN_NOTE_ID);
+            db.execSQL(CREATE_FOLDER_NOTE_TABLE);
         }
     }
 
@@ -276,6 +293,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    /*public int getNoteCount() {
+        int currentUserId = getCurrentUserId();
+        if (currentUserId == -1) {
+            return 0; // 如果没有当前用户，返回 0
+        }
+        Log.d("getNoteCount","currentUserId:"+currentUserId);
+        List<Note> userNotes = getNoteList(currentUserId);
+        Log.d("getNoteCount", "Number of user notes: " + userNotes.size());
+        return userNotes.size();
+    }*/
+
 
     public void logoutCurrentUser() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -382,6 +410,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         db.close();
+        Log.d("getNoteList", String.valueOf(notes.size()));
         return notes;
     }
     public Note getNote(long note_id){
@@ -516,4 +545,188 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+
+    public void printAllNotes() {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // SQL 查询语句，获取所有笔记的标题和内容
+        String query = "SELECT " + NOTE_TABLE_NAME + "." + COLUMN_NOTE_ID + ", "
+                + NOTE_TABLE_NAME + "." + COLUMN_TITLE + ", "
+                + CONTENT_TABLE_NAME + "." + COLUMN_CONTENT
+                + " FROM " + NOTE_TABLE_NAME
+                + " LEFT JOIN " + CONTENT_TABLE_NAME
+                + " ON " + NOTE_TABLE_NAME + "." + COLUMN_NOTE_ID + " = " + CONTENT_TABLE_NAME + "." + COLUMN_NOTE_ID;
+
+        Cursor cursor = db.rawQuery(query, null);
+
+        while (cursor.moveToNext()) {
+            long noteId = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            String title = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TITLE));
+            String content = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CONTENT));
+
+            Log.d("printAllNotes", "Note ID: " + noteId + ", Title: " + title + ", Content: " + content);
+        }
+
+        cursor.close();
+        db.close();
+    }
+
+
+    /*public List<Note> searchNotes(String keyword) {
+        // 调用 printAllNotes 方法输出当前所有笔记的标题和内容
+        printAllNotes();
+
+        List<Note> notes = new ArrayList<>();
+        int currentUserId = getCurrentUserId();
+        if (currentUserId == -1) {
+            Log.d("searchNotes", "currentUserId=-1");
+            return notes; // 如果没有当前用户，返回空列表
+        }
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        String keywordPattern = "%" + keyword + "%";
+        Log.d("searchNotes", "keywordPattern: " + keywordPattern);
+
+        // 查询标题匹配的笔记
+        String titleQuery = "SELECT * FROM " + NOTE_TABLE_NAME + " WHERE " + COLUMN_USER_ID + "=? AND " + COLUMN_TITLE + " LIKE ?";
+        Cursor titleCursor = db.rawQuery(titleQuery, new String[]{String.valueOf(currentUserId), keywordPattern});
+
+        // 添加调试信息，输出标题匹配的内容
+        Log.d("searchNotes", "Title Matching results count: " + titleCursor.getCount());
+
+        while (titleCursor.moveToNext()) {
+            Note note = new Note();
+            note.note_id = titleCursor.getLong(titleCursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            note.title = titleCursor.getString(titleCursor.getColumnIndexOrThrow(COLUMN_TITLE));
+            note.create_time = titleCursor.getString(titleCursor.getColumnIndexOrThrow(COLUMN_CREATE_TIME));
+            note.user_id = titleCursor.getInt(titleCursor.getColumnIndexOrThrow(COLUMN_USER_ID));
+            note.version = titleCursor.getLong(titleCursor.getColumnIndexOrThrow(COLUMN_VERSION));
+
+            Log.d("searchNotes", "Matched Title: " + note.title);
+            Log.d("searchNotes", note.toString());
+            notes.add(note);
+        }
+        titleCursor.close();
+
+        // 查询内容匹配的笔记
+        String contentQuery = "SELECT DISTINCT " + NOTE_TABLE_NAME + ".* FROM " + NOTE_TABLE_NAME + " INNER JOIN " + CONTENT_TABLE_NAME
+                + " ON " + NOTE_TABLE_NAME + "." + COLUMN_NOTE_ID + " = " + CONTENT_TABLE_NAME + "." + COLUMN_NOTE_ID
+                + " WHERE " + NOTE_TABLE_NAME + "." + COLUMN_USER_ID + "=? AND " + CONTENT_TABLE_NAME + "." + COLUMN_CONTENT + " LIKE ?";
+        Cursor contentCursor = db.rawQuery(contentQuery, new String[]{String.valueOf(currentUserId), keywordPattern});
+
+        // 添加调试信息，输出内容匹配的内容
+        Log.d("searchNotes", "Content Matching results count: " + contentCursor.getCount());
+
+        while (contentCursor.moveToNext()) {
+            Note note = new Note();
+            note.note_id = contentCursor.getLong(contentCursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            note.title = contentCursor.getString(contentCursor.getColumnIndexOrThrow(COLUMN_TITLE));
+            note.create_time = contentCursor.getString(contentCursor.getColumnIndexOrThrow(COLUMN_CREATE_TIME));
+            note.user_id = contentCursor.getInt(contentCursor.getColumnIndexOrThrow(COLUMN_USER_ID));
+            note.version = contentCursor.getLong(contentCursor.getColumnIndexOrThrow(COLUMN_VERSION));
+
+            Log.d("searchNotes", "Matched Content for Note ID: " + note.note_id);
+
+            // 检查内容是否匹配并输出匹配的内容
+            Cursor matchedContentCursor = db.rawQuery("SELECT " + COLUMN_CONTENT + " FROM " + CONTENT_TABLE_NAME + " WHERE " + COLUMN_NOTE_ID + " = ? AND " + COLUMN_CONTENT + " LIKE ?", new String[]{String.valueOf(note.note_id), keywordPattern});
+            while (matchedContentCursor.moveToNext()) {
+                String matchedContent = matchedContentCursor.getString(matchedContentCursor.getColumnIndexOrThrow(COLUMN_CONTENT));
+                Log.d("searchNotes", "Matched Content: " + matchedContent);
+            }
+            matchedContentCursor.close();
+
+            Log.d("searchNotes", note.toString());
+            notes.add(note);
+        }
+        contentCursor.close();
+
+        db.close();
+        return notes;
+    }*/
+
+    public List<Note> searchNotes(String keyword) {
+        List<Note> notes = new ArrayList<>();
+        int currentUserId = getCurrentUserId();
+        if (currentUserId == -1) {
+            Log.d("searchNotes", "No current user found, returning empty list");
+            return notes; // 如果没有当前用户，返回空列表
+        }
+
+        Log.d("searchNotes", "Current user ID: " + currentUserId);
+
+        List<Note> userNotes = getNoteList(currentUserId);
+        Log.d("searchNotes", "Number of user notes: " + userNotes.size());
+
+        for (Note note : userNotes) {
+            Log.d("searchNotes", "Processing note: " + note.title);
+            List<Content> contents = getContentList(note.note_id);
+            Log.d("searchNotes", "Number of contents in note: " + contents.size());
+            for (Content content : contents) {
+                Log.d("searchNotes", "Processing content in note: " + content.content);
+                if (content.content.contains(keyword) || note.title.contains(keyword)) {
+                    notes.add(note);
+                    Log.d("searchNotes", "Match found for keyword: " + keyword);
+                    break;
+                }
+            }
+        }
+
+        return notes;
+    }
+
+    public long addFolder(String folderName) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_USER_ID, getCurrentUserId());
+        values.put(COLUMN_FOLDER_NAME, folderName);
+        long row = db.insert(FOLDER_TABLE_NAME, null, values);
+        db.close();
+        return row;
+    }
+
+    public List<String> getAllFolders() {
+        List<String> folders = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {COLUMN_FOLDER_NAME};
+        String selection = COLUMN_USER_ID + "=?";
+        String[] selectionArgs = {String.valueOf(getCurrentUserId())};
+        Cursor cursor = db.query(FOLDER_TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            String folderName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER_NAME));
+            folders.add(folderName);
+        }
+
+        cursor.close();
+        db.close();
+        return folders;
+    }
+
+    public long addNoteToFolder(long noteId, long folderId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_FOLDER_ID, folderId);
+        values.put(COLUMN_NOTE_ID, noteId);
+        long row = db.insert(FOLDER_NOTE_TABLE_NAME, null, values);
+        db.close();
+        return row;
+    }
+
+    public List<Long> getNotesInFolder(long folderId) {
+        List<Long> noteIds = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {COLUMN_NOTE_ID};
+        String selection = COLUMN_FOLDER_ID + "=?";
+        String[] selectionArgs = {String.valueOf(folderId)};
+        Cursor cursor = db.query(FOLDER_NOTE_TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            long noteId = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            noteIds.add(noteId);
+        }
+
+        cursor.close();
+        db.close();
+        return noteIds;
+    }
 }
