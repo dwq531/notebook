@@ -683,6 +683,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return row;
     }
+    public void addFolder(Folder folder) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_USER_ID, folder.user_id);
+        values.put(COLUMN_FOLDER_NAME, folder.folder_name);
+        values.put(COLUMN_FOLDER_ID,folder.folder_id);
+        db.insert(FOLDER_TABLE_NAME, null, values);
+        db.close();
+    }
 
     public List<String> getAllFolders() {
         List<String> folders = new ArrayList<>();
@@ -729,6 +738,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return noteIds;
+    }
+    public boolean checkNoteInFolder(long note_id,long folder_id){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {COLUMN_NOTE_ID};
+        String selection = COLUMN_NOTE_ID + " = ? AND " + COLUMN_FOLDER_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(note_id), String.valueOf(folder_id)};
+        Cursor cursor = db.query(FOLDER_NOTE_TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+        if(cursor.moveToFirst()){
+            return true;
+        }
+        return false;
+
     }
 
     // 添加获取文件夹ID的方法

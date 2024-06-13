@@ -40,7 +40,7 @@ public class UploadManager {
 
     public UploadManager(Context context) {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://183.173.97.190:8000/")
+                .baseUrl("http://183.172.155.18:8000/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
@@ -489,7 +489,12 @@ public class UploadManager {
             @Override
             public void onResponse(Call<List<Folder>> call, Response<List<Folder>> response) {
                 if (response.isSuccessful()){
-                    // todo 更新folder列表
+                    for(Folder folder:response.body()){
+                        if(databaseHelper.getFolderIdByName(folder.folder_name)==-1){
+                            databaseHelper.addFolder(folder);
+                            get_folder_notes(folder.folder_name);
+                        }
+                    }
 
                 }
             }
@@ -500,14 +505,18 @@ public class UploadManager {
             }
         });
     }
-    public void get_folder_notes(int folder_id){
-        Call<List<Note>> call = api.get_folder_notes(folder_id);
+    public void get_folder_notes(String folder_name){
+        Call<List<Note>> call = api.get_folder_notes(folder_name);
+        long folder_id = databaseHelper.getFolderIdByName(folder_name);
         call.enqueue(new Callback<List<Note>>() {
             @Override
             public void onResponse(Call<List<Note>> call, Response<List<Note>> response) {
                 if (response.isSuccessful()){
-                    // todo 更新folder-note列表
-
+                    for(Note note:response.body()){
+                        if(!databaseHelper.checkNoteInFolder(note.note_id,folder_id)){
+                            databaseHelper.addNoteToFolder(note.note_id,folder_id);
+                        }
+                    }
                 }
             }
 
@@ -519,6 +528,19 @@ public class UploadManager {
     }
     public void update_folder(Folder folder){
         Call<ResponseBody> call = api.update_folder(folder.folder_id,folder.user_id,folder.folder_name,folder.version);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+            }
+        });
+    }
+    public void add_note_to_folder(long note_id,long folder_id){
+        Call<ResponseBody> call = api.add_note_to_folder(note_id,folder_id);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {

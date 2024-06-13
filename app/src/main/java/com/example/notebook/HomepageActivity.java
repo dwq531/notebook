@@ -73,6 +73,7 @@ public class HomepageActivity extends AppCompatActivity {
         user_id = databaseHelper.getCurrentUserId();
         uploadManager = new UploadManager(this);
         uploadManager.getNotes(user_id);
+        uploadManager.get_folder_name(user_id);
     }
 
     @Override

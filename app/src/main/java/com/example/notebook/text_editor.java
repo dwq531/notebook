@@ -72,7 +72,8 @@ public class text_editor extends AppCompatActivity {
     private long startTime = 0;
     private TextView audioDuration;
     private DatabaseHelper databaseHelper;
-    private long note_id,user_id;
+    private long note_id;
+    private int user_id;
     private  UploadManager uploadManager;
 
 
@@ -783,6 +784,8 @@ public class text_editor extends AppCompatActivity {
                                 // 如果保存成功，刷新文件夹列表
                                 folders.add(folderName);
                                 adapter.notifyDataSetChanged();
+                                Folder folder = new Folder(folderName,row,user_id,System.currentTimeMillis());
+                                uploadManager.update_folder(folder);
                             }
                         }
                     }
@@ -811,6 +814,7 @@ public class text_editor extends AppCompatActivity {
                         // 如果归档成功，提示用户
                         Toast.makeText(text_editor.this, "已放入文件夹", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
+                        uploadManager.add_note_to_folder(note_id,folderId);
                     }
                 } else {
                     // 如果没有选定文件夹，提示用户选择文件夹

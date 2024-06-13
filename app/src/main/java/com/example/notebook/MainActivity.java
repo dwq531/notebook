@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 // 查询云端服务器的用户信息
                 Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl("http://183.173.97.190s:8000/")
+                        .baseUrl("http://183.172.155.18:8000/")
                         .addConverterFactory(GsonConverterFactory.create())
                         .build();
                 APIEndPoint api = retrofit.create(APIEndPoint.class);
@@ -89,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
                                 finish();
 
                             }
+                            else
+                                Toast.makeText(MainActivity.this, "用户名或密码不正确", Toast.LENGTH_SHORT).show();
                             Log.d("API","Response: " + response.body().toString());
                         }
                         else{

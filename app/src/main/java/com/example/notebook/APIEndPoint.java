@@ -77,11 +77,15 @@ public interface APIEndPoint {
 
     @GET("notes/get_folder_name/{user_id}")
     Call<List<Folder>> get_folder_name(@Path("user_id") long user_id);
-    @GET("notes/get_folder_notes/{folder_id}")
-    Call<List<Note>> get_folder_notes(@Path("folder_id") int folder_id);
+    @GET("notes/get_folder_notes/{folder_name}")
+    Call<List<Note>> get_folder_notes(@Path("folder_name") String folder_name);
+    @FormUrlEncoded
     @POST("notes/update_folder/")
-    Call<ResponseBody> update_folder(@Field("folder_id") int folder_id,
+    Call<ResponseBody> update_folder(@Field("folder_id") long folder_id,
                                      @Field("user_id")int user_id,
                                      @Field("folder_name") String folder_name,
                                      @Field("version")long version);
+    @POST("notes/add_note_to_folder/{note_id}/{folder_id}/")
+    Call<ResponseBody> add_note_to_folder(@Path("note_id")long note_id,
+                                          @Path("folder_id")long folder_id);
 }
