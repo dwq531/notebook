@@ -712,6 +712,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public long addNoteToFolder(long noteId, long folderId) {
+        // 先删除之前的记录
+        removeNoteFromFolder(noteId);
+        
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_FOLDER_ID, folderId);
@@ -805,4 +808,31 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return notes;
     }
+
+    public String getFolderForNoteId(long noteId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String folderName = null;
+        String query = String.format("SELECT %s.%s AS folder_name FROM %s WHERE %s = (SELECT %s FROM %s WHERE %s = ?)",
+                FOLDER_TABLE_NAME, COLUMN_FOLDER_NAME, FOLDER_TABLE_NAME, COLUMN_FOLDER_ID, COLUMN_FOLDER_ID, FOLDER_NOTE_TABLE_NAME, COLUMN_NOTE_ID);
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(noteId)});
+        if (cursor.moveToFirst()) {
+            int folderNameIndex = cursor.getColumnIndex("folder_name");
+            if (folderNameIndex != -1) {
+                folderName = cursor.getString(folderNameIndex);
+            }
+        }
+        cursor.close();
+        return folderName;
+    }
+
+
+
+    public void removeNoteFromFolder(long noteId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(FOLDER_NOTE_TABLE_NAME, COLUMN_NOTE_ID + " = ?", new String[]{String.valueOf(noteId)});
+        db.close();
+    }
+
+
+
 }
