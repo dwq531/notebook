@@ -535,14 +535,14 @@ public class text_editor extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startRecord();
             } else {
-                Toast.makeText(this, "record audio permission is required to access files.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "需要录音权限以访问文件", Toast.LENGTH_LONG).show();
             }
         }
         else if(requestCode == CAMERA_PERMISSION){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startCamera();
             }else{
-                Toast.makeText(this, "Camera permission is required to access files.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "需要相机权限以访问文件", Toast.LENGTH_LONG).show();
             }
         }
         else if (requestCode == REQUEST_READ_MEDIA_AUDIO) {
@@ -551,7 +551,7 @@ public class text_editor extends AppCompatActivity {
                 intent.setType("audio/*");
                 startActivityForResult(intent, PICK_AUDIO_REQUEST);
             } else {
-                Toast.makeText(this, "Read media audio permission is required to access files.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "需要读取媒体音频权限以访问文件", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -768,11 +768,11 @@ public class text_editor extends AppCompatActivity {
                 Log.d("showFolderDialog","butNewFolder");
                 // 显示对话框或输入框以获取新文件夹的名称
                 AlertDialog.Builder builder = new AlertDialog.Builder(text_editor.this);
-                builder.setTitle("New Folder");
+                builder.setTitle("新建文件夹");
                 final EditText input = new EditText(text_editor.this);
                 input.setInputType(InputType.TYPE_CLASS_TEXT);
                 builder.setView(input);
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         String folderName = input.getText().toString();
@@ -787,7 +787,7 @@ public class text_editor extends AppCompatActivity {
                         }
                     }
                 });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -809,11 +809,12 @@ public class text_editor extends AppCompatActivity {
                     long row = databaseHelper.addNoteToFolder(note_id, folderId);
                     if (row != -1) {
                         // 如果归档成功，提示用户
-                        Toast.makeText(text_editor.this, "Note archived successfully.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(text_editor.this, "已放入文件夹", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
                     }
                 } else {
                     // 如果没有选定文件夹，提示用户选择文件夹
-                    Toast.makeText(text_editor.this, "Please select a folder.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(text_editor.this, "请选择一个文件夹放入", Toast.LENGTH_SHORT).show();
                 }
             }
         });

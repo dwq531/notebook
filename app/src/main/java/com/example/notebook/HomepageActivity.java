@@ -80,10 +80,10 @@ public class HomepageActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_READ_MEDIA_IMAGES) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Read media images permission granted.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "读取媒体图片权限已授予", Toast.LENGTH_LONG).show();
             } else {
                 // Permission denied, inform the user that the permission is necessary
-                Toast.makeText(this, "Read media images permission is required to access files.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "需要读取媒体图片权限以访问文件", Toast.LENGTH_LONG).show();
             }
         }
     }

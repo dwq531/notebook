@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
             String password = passwordEditText.getText().toString().trim();
 
             if (username.isEmpty() || password.isEmpty()) {
-                Toast.makeText(MainActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "请填写用户名或密码", Toast.LENGTH_SHORT).show();
             } else {
                 // 查询云端服务器的用户信息
                 Retrofit retrofit = new Retrofit.Builder()
@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
                         if (response.isSuccessful()) {
                             User user = response.body();
                             if(user == null) {
-                                Toast.makeText(MainActivity.this, "Invalid username or password", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this, "用户名或密码不正确", Toast.LENGTH_SHORT).show();
                                 return;
                             }
                             User localUser = databaseHelper.getUser(user.user_id);
@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
                                 uploadManager.downloadImg(user.user_id);
                             }
                             if (databaseHelper.checkUser(username, password)) {
-                                Toast.makeText(MainActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
                                 // 登录成功后跳转到主页
                                 Intent intent = new Intent(MainActivity.this, HomepageActivity.class);
                                 startActivity(intent);
@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onFailure(Call<User> call, Throwable t) {
                         Log.d("API","Failure: " + t.getMessage());
                         if (databaseHelper.checkUser(username, password)) {
-                            Toast.makeText(MainActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
                             // 登录成功后跳转到主页
                             Intent intent = new Intent(MainActivity.this, HomepageActivity.class);
                             startActivity(intent);

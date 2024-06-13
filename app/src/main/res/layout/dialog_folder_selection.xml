@@ -14,11 +14,15 @@
         android:id="@+id/but_new_folder"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
+        android:backgroundTint="#FFEB3B"
+        android:textColor="@color/black"
         android:text="新建文件夹" />
 
     <Button
         android:id="@+id/but_archive"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
+        android:backgroundTint="#FFEB3B"
+        android:textColor="@color/black"
         android:text="确定" />
 </LinearLayout>
