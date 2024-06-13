@@ -57,7 +57,6 @@ public class DashboardFragment extends Fragment {
     private final static int NOTEID =2;
     private final int ADD_NOTE = 0,EDIT_NOTE=1;
     private List<String> folders;
-    private ContentAdapter contentAdapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -71,7 +70,7 @@ public class DashboardFragment extends Fragment {
         user_id = databaseHelper.getCurrentUserId();;
         recyclerView = root.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(root.getContext()));
-        adapter = new ContentAdapter(getActivity(),0,null);
+        adapter = new ContentAdapter(getActivity(),user_id,null);
         recyclerView.setAdapter(adapter);
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,8 +99,6 @@ public class DashboardFragment extends Fragment {
             }
         });
 
-        // 初始化数据库帮助器
-        databaseHelper = new DatabaseHelper(getContext());
 
         // 获取所有文件夹列表
         folders = databaseHelper.getAllFolders();
@@ -135,16 +132,11 @@ public class DashboardFragment extends Fragment {
             }
         });
 
-        // 初始化 RecyclerView
-        recyclerView = root.findViewById(R.id.recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        contentAdapter = new ContentAdapter(getActivity(), 0, null); // 初始化适配器时不设置数据
-        recyclerView.setAdapter(contentAdapter);
 
         // 默认选择“所有笔记”
         spinnerFolders.setSelection(0);
 
-        updateNotes();
+        //updateNotes();
         return root;
     }
 
@@ -152,7 +144,7 @@ public class DashboardFragment extends Fragment {
     private void updateNotesForAllFolders() {
         List<Long> allNoteIds = databaseHelper.getAllNoteIds();
         List<ContentAdapter.Noteblock> notes = databaseHelper.getNotesByIds(allNoteIds);
-        contentAdapter.updateNotes(notes);
+        adapter.updateNotes(notes);
     }
 
     // 更新 RecyclerView 显示指定文件夹下的笔记
@@ -160,7 +152,7 @@ public class DashboardFragment extends Fragment {
         long folderId = databaseHelper.getFolderIdByName(folderName);
         List<Long> noteIds = databaseHelper.getNotesInFolder(folderId);
         List<ContentAdapter.Noteblock> notes = databaseHelper.getNotesByIds(noteIds);
-        contentAdapter.updateNotes(notes);
+        adapter.updateNotes(notes);
     }
 
     @Override

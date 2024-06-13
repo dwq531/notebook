@@ -483,4 +483,51 @@ public class UploadManager {
             }
         });
     }
+    public void get_folder_name(int user_id){
+        Call<List<Folder>> call = api.get_folder_name(user_id);
+        call.enqueue(new Callback<List<Folder>>() {
+            @Override
+            public void onResponse(Call<List<Folder>> call, Response<List<Folder>> response) {
+                if (response.isSuccessful()){
+                    // todo 更新folder列表
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Folder>> call, Throwable t) {
+
+            }
+        });
+    }
+    public void get_folder_notes(int folder_id){
+        Call<List<Note>> call = api.get_folder_notes(folder_id);
+        call.enqueue(new Callback<List<Note>>() {
+            @Override
+            public void onResponse(Call<List<Note>> call, Response<List<Note>> response) {
+                if (response.isSuccessful()){
+                    // todo 更新folder-note列表
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Note>> call, Throwable t) {
+
+            }
+        });
+    }
+    public void update_folder(Folder folder){
+        Call<ResponseBody> call = api.update_folder(folder.folder_id,folder.user_id,folder.folder_name,folder.version);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+            }
+        });
+    }
 }

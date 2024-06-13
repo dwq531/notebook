@@ -74,10 +74,14 @@ public interface APIEndPoint {
 
     @GET("user/get_user_by_name/{name}/")
     Call<User> get_user_by_name(@Path("name") String name);
-    @POST("oauth/2.0/token")
-    Call<ResponseBody> get_access_token(@Query("grant_type") String grantType,
-                                        @Query("client_id") String clientId,
-                                        @Query("client_secret") String clientSecret);
-    @POST("rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions")
-    Call<ResponseBody> ask_AI(@Header("Content-Type") String contentType, @Query("access_token") String access_token, @Body RequestBody request);
+
+    @GET("notes/get_folder_name/{user_id}")
+    Call<List<Folder>> get_folder_name(@Path("user_id") long user_id);
+    @GET("notes/get_folder_notes/{folder_id}")
+    Call<List<Note>> get_folder_notes(@Path("folder_id") int folder_id);
+    @POST("notes/update_folder/")
+    Call<ResponseBody> update_folder(@Field("folder_id") int folder_id,
+                                     @Field("user_id")int user_id,
+                                     @Field("folder_name") String folder_name,
+                                     @Field("version")long version);
 }
