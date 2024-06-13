@@ -58,7 +58,7 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
         }
     }
 
-    public class Noteblock{
+    public static class Noteblock{
         public String title,time;
         public long note_id;
         public Noteblock(String title,String time,long note_id){
@@ -157,5 +157,10 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
         return spannable;
     }
 
-
+    // 添加 updateNotes 方法
+    public void updateNotes(List<Noteblock> newNoteblocks) {
+        noteblocks.clear();
+        noteblocks.addAll(newNoteblocks);
+        notifyDataSetChanged();
+    }
 }

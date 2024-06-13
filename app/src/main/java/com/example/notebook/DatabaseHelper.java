@@ -708,6 +708,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_FOLDER_ID, folderId);
         values.put(COLUMN_NOTE_ID, noteId);
         long row = db.insert(FOLDER_NOTE_TABLE_NAME, null, values);
+        Log.d("addNoteToFolder","folder="+folderId+",note="+noteId);
         db.close();
         return row;
     }
@@ -746,5 +747,41 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return folderId;
+    }
+
+    public List<Long> getAllNoteIds() {
+        List<Long> noteIds = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {COLUMN_NOTE_ID};
+        Cursor cursor = db.query(NOTE_TABLE_NAME, columns, null, null, null, null, null);
+
+        while (cursor.moveToNext()) {
+            long noteId = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_NOTE_ID));
+            noteIds.add(noteId);
+        }
+
+        cursor.close();
+        db.close();
+        return noteIds;
+    }
+
+    public List<ContentAdapter.Noteblock> getNotesByIds(List<Long> noteIds) {
+        List<ContentAdapter.Noteblock> notes = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        for (Long noteId : noteIds) {
+            String selection = COLUMN_NOTE_ID + "=?";
+            String[] selectionArgs = {String.valueOf(noteId)};
+            Cursor cursor = db.query(NOTE_TABLE_NAME, null, selection, selectionArgs, null, null, null);
+
+            if (cursor.moveToFirst()) {
+                String title = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TITLE));
+                String time = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATE_TIME));
+                notes.add(new ContentAdapter.Noteblock(title, time, noteId));
+            }
+
+            cursor.close();
+        }
+        db.close();
+        return notes;
     }
 }

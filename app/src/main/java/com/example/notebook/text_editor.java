@@ -801,13 +801,12 @@ public class text_editor extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // 获取选定的笔记和文件夹
-                long noteId = 1; // 获取选定的笔记ID;
                 String folderName = adapter.getSelectedFolder();
                 if (folderName != null) {
                     // 根据文件夹名称获取文件夹ID
                     long folderId = databaseHelper.getFolderIdByName(folderName);
                     // 将笔记归档到选定的文件夹中
-                    long row = databaseHelper.addNoteToFolder(noteId, folderId);
+                    long row = databaseHelper.addNoteToFolder(note_id, folderId);
                     if (row != -1) {
                         // 如果归档成功，提示用户
                         Toast.makeText(text_editor.this, "Note archived successfully.", Toast.LENGTH_SHORT).show();
