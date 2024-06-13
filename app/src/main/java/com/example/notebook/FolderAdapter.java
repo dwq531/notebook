@@ -16,12 +16,13 @@ import java.util.List;
 public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder> {
 
     private List<String> folders;
-    private int selectedPosition = -1;
     private String currentFolder;
+    private int selectedPosition = -1;
 
     public FolderAdapter(List<String> folders, String currentFolder) {
         this.folders = folders;
         this.currentFolder = currentFolder;
+        this.selectedPosition = folders.indexOf(currentFolder);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -49,31 +50,28 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         String folder = folders.get(position);
         holder.folderName.setText(folder);
 
-        if (folder.equals(currentFolder)) {
-            holder.folderCheckBox.setChecked(true);
-            // selectedPosition = position; // 设置选中位置
-        } else {
-            holder.folderCheckBox.setChecked(false);
-        }
+        // 设置 CheckBox 的状态
+        holder.folderCheckBox.setChecked(folder.equals(currentFolder));
 
         holder.folderItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 selectedPosition = holder.getAdapterPosition();
+                currentFolder = folders.get(selectedPosition);
                 notifyDataSetChanged();
             }
         });
-
-        holder.folderCheckBox.setChecked(selectedPosition == position);
 
         holder.folderCheckBox.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 selectedPosition = holder.getAdapterPosition();
+                currentFolder = folders.get(selectedPosition);
                 notifyDataSetChanged();
             }
         });
 
+        // 设置背景颜色
         if (selectedPosition == position) {
             holder.folderItem.setBackgroundColor(Color.LTGRAY);
         } else {
@@ -93,7 +91,7 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         return null;
     }
 
-    // 添加方法更新文件夹列表并通知数据集改变
+    // 更新文件夹列表并通知数据集改变
     public void updateFolders(List<String> newFolders) {
         this.folders = newFolders;
         notifyDataSetChanged();

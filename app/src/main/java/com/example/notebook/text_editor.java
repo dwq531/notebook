@@ -760,7 +760,8 @@ public class text_editor extends AppCompatActivity {
         List<String> folders = databaseHelper.getAllFolders();
 
         // 实例化 FolderAdapter，并为 folderRecyclerView 设置适配器
-        FolderAdapter adapter = new FolderAdapter(folders,null);
+        // Log.d("databaseHelper.getFolderForNoteId(note_id)",databaseHelper.getFolderForNoteId(note_id));
+        FolderAdapter adapter = new FolderAdapter(folders,databaseHelper.getFolderForNoteId(note_id));
         folderRecyclerView.setAdapter(adapter);
         folderRecyclerView.setLayoutManager(new LinearLayoutManager(this)); // 设置布局管理器
 
