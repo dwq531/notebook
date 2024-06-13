@@ -33,13 +33,13 @@ public class RegisterActivity extends AppCompatActivity {
             String password = passwordEditText.getText().toString().trim();
 
             if (username.isEmpty() || password.isEmpty()) {
-                Toast.makeText(RegisterActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RegisterActivity.this, "请填写用户名或密码", Toast.LENGTH_SHORT).show();
             } else if (databaseHelper.isUsernameExists(username)) {
                 showUsernameExistsDialog();
             } else {
                 int user_id = databaseHelper.addUser(username, password);
                 uploadManager.upload_user(user_id);
-                Toast.makeText(RegisterActivity.this, "User registered successfully", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RegisterActivity.this, "注册成功", Toast.LENGTH_SHORT).show();
                 // 打印所有用户信息
                 databaseHelper.printAllUsers();
                 finish();

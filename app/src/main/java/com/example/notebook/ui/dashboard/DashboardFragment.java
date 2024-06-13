@@ -7,8 +7,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -53,6 +56,9 @@ public class DashboardFragment extends Fragment {
     private int user_id = 0;
     private final static int NOTEID =2;
     private final int ADD_NOTE = 0,EDIT_NOTE=1;
+    private List<String> folders;
+    private ContentAdapter contentAdapter;
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         DashboardViewModel dashboardViewModel =
@@ -94,9 +100,67 @@ public class DashboardFragment extends Fragment {
             }
         });
 
+        // 初始化数据库帮助器
+        databaseHelper = new DatabaseHelper(getContext());
+
+        // 获取所有文件夹列表
+        folders = databaseHelper.getAllFolders();
+
+        // 在文件夹列表前添加“所有笔记”选项
+        folders.add(0, "所有笔记");
+
+        // 初始化 Spinner
+        Spinner spinnerFolders = root.findViewById(R.id.spinner_folders);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, folders);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerFolders.setAdapter(adapter);
+
+        // 设置 Spinner 的选择事件监听器
+        spinnerFolders.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedFolder = folders.get(position);
+                if (position == 0) {
+                    // 选择了“所有笔记”
+                    updateNotesForAllFolders();
+                } else {
+                    // 选择了具体的文件夹
+                    updateNotesForFolder(selectedFolder);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // 当没有选择任何文件夹时的处理
+            }
+        });
+
+        // 初始化 RecyclerView
+        recyclerView = root.findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        contentAdapter = new ContentAdapter(getActivity(), 0, null); // 初始化适配器时不设置数据
+        recyclerView.setAdapter(contentAdapter);
+
+        // 默认选择“所有笔记”
+        spinnerFolders.setSelection(0);
 
         updateNotes();
         return root;
+    }
+
+    // 更新 RecyclerView 显示所有文件夹下的笔记
+    private void updateNotesForAllFolders() {
+        List<Long> allNoteIds = databaseHelper.getAllNoteIds();
+        List<ContentAdapter.Noteblock> notes = databaseHelper.getNotesByIds(allNoteIds);
+        contentAdapter.updateNotes(notes);
+    }
+
+    // 更新 RecyclerView 显示指定文件夹下的笔记
+    private void updateNotesForFolder(String folderName) {
+        long folderId = databaseHelper.getFolderIdByName(folderName);
+        List<Long> noteIds = databaseHelper.getNotesInFolder(folderId);
+        List<ContentAdapter.Noteblock> notes = databaseHelper.getNotesByIds(noteIds);
+        contentAdapter.updateNotes(notes);
     }
 
     @Override
