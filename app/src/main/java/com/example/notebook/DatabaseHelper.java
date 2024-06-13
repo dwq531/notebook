@@ -784,4 +784,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return notes;
     }
+
+    public String getFolderForNoteId(long noteId) {
+        String folderName = null;
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT folder_name FROM folders WHERE note_id = ?", new String[]{String.valueOf(noteId)});
+        if (cursor.moveToFirst()) {
+            folderName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER_NAME));
+        }
+        cursor.close();
+        return folderName;
+    }
+
+    public void removeNoteFromFolder(long noteId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("folders", "note_id = ?", new String[]{String.valueOf(noteId)});
+    }
+
+
 }

@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -46,6 +47,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.example.notebook.ui.dashboard.DashboardFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
@@ -74,6 +76,7 @@ public class text_editor extends AppCompatActivity {
     private DatabaseHelper databaseHelper;
     private long note_id,user_id;
     private  UploadManager uploadManager;
+    private boolean is_folder_change = false;
 
 
     String currentPhotoPath,currentAudioPath;
@@ -236,6 +239,7 @@ public class text_editor extends AppCompatActivity {
                 returnIntent.putExtra("title",title.getText().toString());
                 returnIntent.putExtra("time",time.getText().toString());
                 returnIntent.putExtra("note_id",note_id);
+                returnIntent.putExtra("is_folder_change",is_folder_change);
                 setResult(RESULT_OK, returnIntent);
                 finish();
             }
@@ -756,7 +760,7 @@ public class text_editor extends AppCompatActivity {
         List<String> folders = databaseHelper.getAllFolders();
 
         // 实例化 FolderAdapter，并为 folderRecyclerView 设置适配器
-        FolderAdapter adapter = new FolderAdapter(folders);
+        FolderAdapter adapter = new FolderAdapter(folders,null);
         folderRecyclerView.setAdapter(adapter);
         folderRecyclerView.setLayoutManager(new LinearLayoutManager(this)); // 设置布局管理器
 
@@ -782,7 +786,9 @@ public class text_editor extends AppCompatActivity {
                             if (row != -1) {
                                 // 如果保存成功，刷新文件夹列表
                                 folders.add(folderName);
+                                adapter.updateFolders(folders);
                                 adapter.notifyDataSetChanged();
+                                is_folder_change = true;
                             }
                         }
                     }

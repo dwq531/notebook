@@ -31,32 +31,25 @@ import com.example.notebook.UploadManager;
 import com.example.notebook.databinding.FragmentDashboardBinding;
 import com.example.notebook.text_editor;
 
-import org.w3c.dom.Text;
-
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
-
 public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
-    Button addButton,searchButton;
+    Button addButton, searchButton;
     private RecyclerView recyclerView;
     private ContentAdapter adapter;
     private DatabaseHelper databaseHelper;
     private UploadManager uploadManager;
     private int user_id = 0;
-    private final static int NOTEID =2;
-    private final int ADD_NOTE = 0,EDIT_NOTE=1;
+    private final static int NOTEID = 2;
+    private final int ADD_NOTE = 0, EDIT_NOTE = 1;
     private List<String> folders;
+    Spinner spinnerFolders;
+    private ArrayAdapter<String> spinnerAdapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -67,10 +60,10 @@ public class DashboardFragment extends Fragment {
         View root = binding.getRoot();
         addButton = root.findViewById(R.id.but_add);
         databaseHelper = new DatabaseHelper(root.getContext());
-        user_id = databaseHelper.getCurrentUserId();;
+        user_id = databaseHelper.getCurrentUserId();
         recyclerView = root.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(root.getContext()));
-        adapter = new ContentAdapter(getActivity(),user_id,null);
+        adapter = new ContentAdapter(getActivity(), user_id, null);
         recyclerView.setAdapter(adapter);
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -80,13 +73,13 @@ public class DashboardFragment extends Fragment {
                 Calendar calendar = Calendar.getInstance();
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
                 String time = dateFormat.format(calendar.getTime());
-                long note_id = databaseHelper.addNote(user_id,"新建笔记",time);
+                long note_id = databaseHelper.addNote(user_id, "新建笔记", time);
                 uploadManager.addNote(note_id);
-                databaseHelper.addContent(note_id,"",0,0);
+                databaseHelper.addContent(note_id, "", 0, 0);
                 Log.d("text_editor", String.valueOf(note_id));
                 intent.putExtra("note_id", note_id);
-                intent.putExtra("user_id",user_id);
-                startActivityForResult(intent,ADD_NOTE);
+                intent.putExtra("user_id", user_id);
+                startActivityForResult(intent, ADD_NOTE);
             }
         });
 
@@ -99,7 +92,6 @@ public class DashboardFragment extends Fragment {
             }
         });
 
-
         // 获取所有文件夹列表
         folders = databaseHelper.getAllFolders();
 
@@ -107,10 +99,10 @@ public class DashboardFragment extends Fragment {
         folders.add(0, "所有笔记");
 
         // 初始化 Spinner
-        Spinner spinnerFolders = root.findViewById(R.id.spinner_folders);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, folders);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerFolders.setAdapter(adapter);
+        spinnerFolders = root.findViewById(R.id.spinner_folders);
+        spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, folders);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerFolders.setAdapter(spinnerAdapter);
 
         // 设置 Spinner 的选择事件监听器
         spinnerFolders.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -132,11 +124,9 @@ public class DashboardFragment extends Fragment {
             }
         });
 
-
         // 默认选择“所有笔记”
         spinnerFolders.setSelection(0);
 
-        //updateNotes();
         return root;
     }
 
@@ -155,27 +145,40 @@ public class DashboardFragment extends Fragment {
         adapter.updateNotes(notes);
     }
 
+    // 更新 Spinner 列表
+    public void updateSpinnerFolders(List<String> newFolders) {
+        folders.clear();
+        folders.add("所有笔记");
+        folders.addAll(newFolders);
+        spinnerAdapter.notifyDataSetChanged();
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
     }
-    public void clearNotes(){
 
+    public void clearNotes() {
+        // clear notes implementation
     }
-    public void updateNotes(){
+
+    public void updateNotes() {
         List<Note> notes = databaseHelper.getNoteList(user_id);
-        Log.d("adapter",notes.toString());
-        for(Note note:notes){
-            adapter.addItem(note.title,note.create_time,note.note_id);
+        Log.d("adapter", notes.toString());
+        for (Note note : notes) {
+            adapter.addItem(note.title, note.create_time, note.note_id);
         }
     }
-    public void addNoteItem(String title,String time,long note_id){
-        adapter.addItem(title,time,note_id);
+
+    public void addNoteItem(String title, String time, long note_id) {
+        adapter.addItem(title, time, note_id);
     }
-    public void editNoteItem(String title,long note_id){
-        adapter.editNote(note_id,title);
+
+    public void editNoteItem(String title, long note_id) {
+        adapter.editNote(note_id, title);
     }
+
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -184,20 +187,27 @@ public class DashboardFragment extends Fragment {
                 if (data != null) {
                     String title = data.getStringExtra("title");
                     String time = data.getStringExtra("time");
-                    Long note_id = data.getLongExtra("note_id",-1);
+                    Long note_id = data.getLongExtra("note_id", -1);
                     // 新增note block
-                    addNoteItem(title,time,note_id);
+                    addNoteItem(title, time, note_id);
 
+                    boolean is_folder_change = data.getBooleanExtra("is_folder_change",false);
+                    if(is_folder_change){
+                        updateSpinnerFolders(databaseHelper.getAllFolders());
+                    }
                 }
             }
-        }
-        else if(requestCode == EDIT_NOTE){
-            if (resultCode == Activity.RESULT_OK && data != null){
+        } else if (requestCode == EDIT_NOTE) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
                 String title = data.getStringExtra("title");
-                Long note_id = data.getLongExtra("note_id",-1);
-                Log.d("notelist",title);
-                editNoteItem(title,note_id);
+                Long note_id = data.getLongExtra("note_id", -1);
+                Log.d("notelist", title);
+                editNoteItem(title, note_id);
 
+                boolean is_folder_change = data.getBooleanExtra("is_folder_change",false);
+                if(is_folder_change){
+                    updateSpinnerFolders(databaseHelper.getAllFolders());
+                }
             }
             // todo
         }

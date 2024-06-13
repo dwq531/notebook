@@ -17,9 +17,11 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
 
     private List<String> folders;
     private int selectedPosition = -1;
+    private String currentFolder;
 
-    public FolderAdapter(List<String> folders) {
+    public FolderAdapter(List<String> folders, String currentFolder) {
         this.folders = folders;
+        this.currentFolder = currentFolder;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -46,6 +48,13 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
     public void onBindViewHolder(@NonNull FolderAdapter.ViewHolder holder, int position) {
         String folder = folders.get(position);
         holder.folderName.setText(folder);
+
+        if (folder.equals(currentFolder)) {
+            holder.folderCheckBox.setChecked(true);
+            // selectedPosition = position; // 设置选中位置
+        } else {
+            holder.folderCheckBox.setChecked(false);
+        }
 
         holder.folderItem.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -82,5 +91,11 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
             return folders.get(selectedPosition);
         }
         return null;
+    }
+
+    // 添加方法更新文件夹列表并通知数据集改变
+    public void updateFolders(List<String> newFolders) {
+        this.folders = newFolders;
+        notifyDataSetChanged();
     }
 }
